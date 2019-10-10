@@ -49,6 +49,9 @@ class EmailNotificationServiceSpec extends MockAuditingService with MockitoAnswe
     val emailNotificationService = new EmailNotificationService(mockHttpClient, mockMetricsReporterService, mockAuditingService)
   }
 
+  // We're testing emails
+  FeatureSwitch.EmailNotifications.enable()
+
   "sendEmail" should {
     "send the email request" in new EmailNotificationServiceScenario {
 
