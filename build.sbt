@@ -5,6 +5,9 @@ import scoverage.ScoverageKeys
 
 val appName = "customs-financials-email-throttler"
 
+organization := "uk.gov.hmrc"
+scalaVersion := "2.12.11"
+
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
   .settings(scoverageSettings: _*)
