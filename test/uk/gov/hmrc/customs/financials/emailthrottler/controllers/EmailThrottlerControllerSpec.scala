@@ -18,17 +18,17 @@ package uk.gov.hmrc.customs.financials.emailthrottler.controllers
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.verify
-import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.play.PlaySpec
 import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest, Helpers}
-import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.services.EmailQueue
 
+import scala.concurrent.ExecutionContext.Implicits.global
 //noinspection TypeAnnotation
-class EmailThrottlerControllerSpec extends WordSpec with Matchers with MockitoSugar {
+class EmailThrottlerControllerSpec extends PlaySpec with MockitoSugar {
 
   class EmailThrottlerScenario() {
     val requestBody = Json.parse(
@@ -44,17 +44,16 @@ class EmailThrottlerControllerSpec extends WordSpec with Matchers with MockitoSu
         | "onSendUrl": "on.send.url.co.uk"
         |}""".stripMargin)
     val fakeRequest = FakeRequest("POST", "/", FakeHeaders(), requestBody)
-    val mockAppconfig = mock[AppConfig]
     val mockEmailQueue = mock[EmailQueue]
 
-    val controller = new EmailThrottlerController(mockEmailQueue, mockAppconfig, Helpers.stubControllerComponents())
+    val controller = new EmailThrottlerController(mockEmailQueue, Helpers.stubControllerComponents())
   }
 
   "the controller" should {
 
     "handle enqueue request" in new EmailThrottlerScenario {
       val result = controller.enqueueEmail()(fakeRequest)
-      status(result) shouldBe Status.ACCEPTED
+      status(result) mustBe Status.ACCEPTED
     }
 
     "ask EmailQueue service to store emails" in new EmailThrottlerScenario {
@@ -66,7 +65,7 @@ class EmailThrottlerControllerSpec extends WordSpec with Matchers with MockitoSu
       val invalidRequestBody= Json.parse("{}")
       val invalidRequest = FakeRequest("POST", "/", FakeHeaders(), invalidRequestBody)
       val result = controller.enqueueEmail()(invalidRequest)
-      status(result) shouldBe Status.BAD_REQUEST
+      status(result) mustBe Status.BAD_REQUEST
     }
 
   }

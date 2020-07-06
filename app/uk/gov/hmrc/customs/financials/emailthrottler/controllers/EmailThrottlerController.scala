@@ -17,18 +17,17 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.{Logger, LoggerLike}
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
-import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
+import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.domain.EmailRequest
 import uk.gov.hmrc.customs.financials.emailthrottler.services.EmailQueue
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class EmailThrottlerController @Inject()(emailQueue: EmailQueue, appConfig: AppConfig, cc: ControllerComponents)
+class EmailThrottlerController @Inject()(emailQueue: EmailQueue, cc: ControllerComponents)(implicit ec: ExecutionContext)
     extends BackendController(cc) {
 
   val log: LoggerLike = Logger(this.getClass)

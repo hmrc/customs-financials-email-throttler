@@ -31,14 +31,14 @@ import uk.gov.hmrc.customs.financials.emailthrottler.domain.{EmailRequest, SendE
 import uk.gov.hmrc.mongo.MongoConnector
 import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 //noinspection TypeAnnotation
 class EmailJobHandlerSpec extends WordSpec with MockitoSugar with FutureAwaits with DefaultAwaitTimeout {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  class MockedEmailJobHandlerScenario()(implicit ec: ExecutionContext) {
+  class MockedEmailJobHandlerScenario() {
 
     val sendEmailJob = SendEmailJob(
       BSONObjectID.generate,
