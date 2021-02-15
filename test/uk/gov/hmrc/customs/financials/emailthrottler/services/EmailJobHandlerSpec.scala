@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import reactivemongo.bson.BSONObjectID
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.domain.{EmailRequest, SendEmailJob}
 import uk.gov.hmrc.mongo.MongoConnector
-import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
 
 import scala.concurrent.Future
 
@@ -86,8 +85,7 @@ class EmailJobHandlerSpec extends WordSpec with MockitoSugar with FutureAwaits w
       "integration" in {
         val env           = Environment.simple()
         val configuration = Configuration.load(env)
-        val serviceConfig = new ServicesConfig(configuration, new RunMode(configuration, Mode.Dev))
-        val appConfig     = new AppConfig(configuration, serviceConfig, env)
+        val appConfig = mock[AppConfig]
         val dateTimeService = new DateTimeService
         val reactiveMongoComponent = new ReactiveMongoComponent {
           val mongoUri = "mongodb://127.0.0.1:27017/test-customs-email-throttler"

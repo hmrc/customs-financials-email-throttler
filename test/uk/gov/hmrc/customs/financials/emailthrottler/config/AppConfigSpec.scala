@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,15 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.config
 
 import org.scalatest.{Matchers, WordSpec}
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
 
 class AppConfigSpec extends WordSpec with Matchers {
 
   val environment: Environment = Environment.simple()
   val configuration: Configuration = Configuration.load(environment)
-  val runMode = new RunMode(configuration, environment.mode)
-  val servicesConfig = new ServicesConfig(configuration, runMode)
-  val appConfig = new AppConfig(configuration, servicesConfig, environment)
+  val application = new GuiceApplicationBuilder().build()
+  val appConfig = application.injector.instanceOf[AppConfig]
 
   "AppConfig" should {
 
