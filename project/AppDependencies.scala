@@ -17,15 +17,4 @@ object AppDependencies {
     "org.mockito"             %  "mockito-core"             % "3.1.0"                % "test"
   )
 
-  val akkaVersion = "2.5.23"
-  val akkaHttpVersion = "10.0.15"
-
-  val overrides: Seq[ModuleID] = Seq(
-    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-    "com.typesafe.akka" %% "akka-protobuf" % akkaVersion,
-    "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-    "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-    "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
-  )
-
 }
