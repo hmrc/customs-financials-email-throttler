@@ -91,6 +91,7 @@ class EmailJobHandlerSpec extends SpecBase {
         val mockDateTimeService = mock[DateTimeService]
         val emailQueue = new EmailQueue(reactiveMongoComponent, mockDateTimeService, appConfig, metricsReporter)
 
+        when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
         val emailRequests = Seq(
           EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
           EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
