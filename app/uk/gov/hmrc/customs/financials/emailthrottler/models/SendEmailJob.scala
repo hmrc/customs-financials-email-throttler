@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, Json, OFormat}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-import java.time.OffsetDateTime
+import java.time.LocalDateTime
 
-case class SendEmailJob(_id: String, emailRequest: EmailRequest, timeStampAndCRL: OffsetDateTime, processing: Boolean)
+case class SendEmailJob(_id: String, emailRequest: EmailRequest, processing: Boolean, lastUpdated: LocalDateTime)
 
 object SendEmailJob {
+  implicit val mongoDateTime: Format[LocalDateTime] = MongoJavatimeFormats.localDateTimeFormat
   implicit val formatSendEmailJob: OFormat[SendEmailJob] = Json.format[SendEmailJob]
 }

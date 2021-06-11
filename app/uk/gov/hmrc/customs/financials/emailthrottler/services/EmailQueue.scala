@@ -16,17 +16,17 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
-import com.mongodb.client.model.Indexes.ascending
+import com.mongodb.client.model.Indexes.descending
 import com.mongodb.client.model.Updates
 import org.mongodb.scala.model.Filters.equal
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, UpdateOptions}
-import play.api.libs.json.Json
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions}
 import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailRequest, SendEmailJob}
 import uk.gov.hmrc.mongo.play.PlayMongoComponent
-import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
+import java.time.{LocalDateTime, ZoneOffset}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,29 +35,26 @@ import scala.util.{Failure, Success}
 @Singleton
 class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
                            appConfig: AppConfig,
-                           dateTimeService: DateTimeService,
                            metricsReporter: MetricsReporterService)
                           (implicit ec: ExecutionContext)
   extends PlayMongoRepository[SendEmailJob](
-    collectionName = "emailQueue",
+    collectionName = "email-queue",
     mongoComponent = mongoComponent,
     domainFormat = SendEmailJob.formatSendEmailJob,
     indexes = Seq(
       IndexModel(
-        ascending("timeStampAndCRL"),
-        IndexOptions().name("timestampIndex")
-          .unique(false)
+        descending("lastUpdated"),
+        IndexOptions().name("email-queue-last-updated-index")
           .background(true)
-          .sparse(false)
       )
     )) {
 
   val logger: LoggerLike = Logger(this.getClass)
 
   def enqueueJob(emailRequest: EmailRequest): Future[Boolean] = {
-    val timeStamp = dateTimeService.getTimeStamp
+    val timeStamp = LocalDateTime.now()
     val id = UUID.randomUUID().toString
-    val record = SendEmailJob(id, emailRequest, timeStamp, processing = false)
+    val record = SendEmailJob(id, emailRequest, processing = false, timeStamp)
     val result: Future[Boolean] = collection.insertOne(record).toFuture().map(_.wasAcknowledged())
     result.onComplete {
       case Failure(error) =>
@@ -105,15 +102,14 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
   }
 
   def resetProcessing: Future[Unit] = {
-    val maxAge = dateTimeService.getTimeStamp.minusMinutes(appConfig.emailMaxAgeMins)
+    val maxAge = LocalDateTime.now().minusMinutes(appConfig.emailMaxAgeMins)
     val updates = Updates.set("processing", false)
     collection.updateMany(
       filter =  Filters.and(
         Filters.equal("processing", true),
-        Filters.lt("timeStampAndCRL", Codecs.toBson(Json.toJson(maxAge)))
+        Filters.lt("lastUpdated", maxAge.toInstant(ZoneOffset.UTC))
       ),
-      updates,
-      UpdateOptions().upsert(true)
+      updates
     ).toFuture().map(_ => ())
   }
 

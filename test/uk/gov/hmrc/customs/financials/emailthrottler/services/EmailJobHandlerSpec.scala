@@ -26,7 +26,7 @@ import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailRequest, SendE
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import uk.gov.hmrc.mongo.play.PlayMongoComponent
 
-import java.time.{OffsetDateTime, ZoneOffset}
+import java.time.LocalDateTime
 import java.util.UUID
 import scala.concurrent.Future
 
@@ -39,8 +39,8 @@ class EmailJobHandlerSpec extends SpecBase {
     val sendEmailJob: SendEmailJob = SendEmailJob(
       UUID.randomUUID().toString,
       EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
-      OffsetDateTime.of(2019,10,8,15,1,0,0,ZoneOffset.UTC),
-      processing = true
+      processing = true,
+      LocalDateTime.of(2019,10,8,15,1,0,0)
     )
 
     val mockEmailQueue: EmailQueue = mock[EmailQueue]
@@ -81,7 +81,6 @@ class EmailJobHandlerSpec extends SpecBase {
 
       "integration" in {
         val appConfig = mock[AppConfig]
-        val dateTimeService = new DateTimeService
         val mockConfiguration = mock[Configuration]
         val mockApplicationLifeCycle = mock[ApplicationLifecycle]
         when(mockConfiguration.get(ArgumentMatchers.eq("mongodb.uri"))(any)).thenReturn("mongodb://127.0.0.1:27017/test-customs-email-throttler")
@@ -89,7 +88,7 @@ class EmailJobHandlerSpec extends SpecBase {
         val reactiveMongoComponent: PlayMongoComponent = new PlayMongoComponent(mockConfiguration, lifecycle = mockApplicationLifeCycle)
 
         val metricsReporter = mock[MetricsReporterService]
-        val emailQueue = new EmailQueue(reactiveMongoComponent, appConfig, dateTimeService, metricsReporter)
+        val emailQueue = new EmailQueue(reactiveMongoComponent, appConfig, metricsReporter)
 
         val emailRequests = Seq(
           EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
