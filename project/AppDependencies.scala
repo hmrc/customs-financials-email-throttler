@@ -4,7 +4,6 @@ import sbt._
 object AppDependencies {
 
   val compile: Seq[ModuleID] = Seq(
-//    "uk.gov.hmrc"             %% "simple-reactivemongo"      % "7.31.0-play-27",
     "uk.gov.hmrc.mongo"       %% "hmrc-mongo-play-28"        % "0.50.0",
     "uk.gov.hmrc"             %% "bootstrap-backend-play-28" % "5.3.0"
   )
