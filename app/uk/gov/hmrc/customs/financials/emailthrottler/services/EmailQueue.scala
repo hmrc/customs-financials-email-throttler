@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
-import com.mongodb.client.model.Indexes.descending
+import com.mongodb.client.model.Indexes.{ascending, descending}
 import com.mongodb.client.model.Updates
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions}
@@ -43,7 +43,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     domainFormat = SendEmailJob.formatSendEmailJob,
     indexes = Seq(
       IndexModel(
-        descending("lastUpdated"),
+        ascending("lastUpdated"),
         IndexOptions().name("email-queue-last-updated-index")
           .background(true)
       )
@@ -72,7 +72,6 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     val eventualResult: Future[Option[SendEmailJob]] = collection.findOneAndUpdate(
       filter = equal("processing", false),
       update = Updates.set("processing", true)).toFutureOption()
-
 
     eventualResult.onComplete {
       case Success(Some(result))  =>

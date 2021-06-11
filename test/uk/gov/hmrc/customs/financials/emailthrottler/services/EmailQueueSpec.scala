@@ -18,6 +18,7 @@ package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import org.mockito.Mockito.{spy, when}
 import org.scalatest.BeforeAndAfterEach
+import play.api.inject
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.running
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
@@ -87,8 +88,6 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       }
 
       "reset the processing flag for emails which are older than maximum age" in new Setup  {
-        when(mockAppConfig.emailMaxAgeMins).thenReturn(0)
-
         val emailRequests = Seq(
           EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
           EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
@@ -106,7 +105,7 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
           await(emailQueue.resetProcessing)
 
           val resetCount: Long = await(emailQueue.countDocuments(false))
-          resetCount must be(3)
+          resetCount must be(5)
         }
       }
   }
@@ -114,8 +113,9 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
   trait Setup{
     val mockAppConfig: AppConfig = mock[AppConfig]
-    val app = new GuiceApplicationBuilder().build()
+    val app = new GuiceApplicationBuilder().configure("emailMaxAgeMins" -> "-10").build()
     val emailQueue = app.injector.instanceOf[EmailQueue]
+
     await(emailQueue.removeAll)
   }
 
