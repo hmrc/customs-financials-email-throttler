@@ -16,47 +16,49 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
+import com.mongodb.client.model.Indexes.ascending
+import com.mongodb.client.model.Updates
+import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, UpdateOptions}
 import play.api.libs.json.Json
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.commands.WriteResult
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.BSONObjectID
-import reactivemongo.play.json.collection.Helpers.idWrites
+import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailRequest, SendEmailJob}
-import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import uk.gov.hmrc.mongo.play.PlayMongoComponent
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 @Singleton
-class EmailQueue @Inject()(mongoComponent: ReactiveMongoComponent,
+class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
                            appConfig: AppConfig,
                            dateTimeService: DateTimeService,
                            metricsReporter: MetricsReporterService)
                           (implicit ec: ExecutionContext)
-  extends ReactiveRepository[SendEmailJob, BSONObjectID](
+  extends PlayMongoRepository[SendEmailJob](
     collectionName = "emailQueue",
-    mongo = mongoComponent.mongoConnector.db,
+    mongoComponent = mongoComponent,
     domainFormat = SendEmailJob.formatSendEmailJob,
-    idFormat = ReactiveMongoFormats.objectIdFormats) {
+    indexes = Seq(
+      IndexModel(
+        ascending("timeStampAndCRL"),
+        IndexOptions().name("timestampIndex")
+          .unique(false)
+          .background(true)
+          .sparse(false)
+      )
+    )) {
 
-  private val timestampIndex = Index(
-    Seq("timeStampAndCRL" -> IndexType.Ascending),
-    name = Some("timestampIndex"),
-    unique = false,
-    background = true,
-    sparse = false)
+  val logger: LoggerLike = Logger(this.getClass)
 
-  private val _ = collection.indexesManager.ensure(timestampIndex)
-
-
-  def enqueueJob(emailRequest: EmailRequest): Future[Unit] = {
+  def enqueueJob(emailRequest: EmailRequest): Future[Boolean] = {
     val timeStamp = dateTimeService.getTimeStamp
-
-    val result: Future[WriteResult] = insert(SendEmailJob(BSONObjectID.generate, emailRequest, timeStamp, processing = false))
+    val id = UUID.randomUUID().toString
+    val record = SendEmailJob(id, emailRequest, timeStamp, processing = false)
+    val result: Future[Boolean] = collection.insertOne(record).toFuture().map(_.wasAcknowledged())
     result.onComplete {
       case Failure(error) =>
         metricsReporter.reportFailedEnqueueJob()
@@ -66,33 +68,31 @@ class EmailQueue @Inject()(mongoComponent: ReactiveMongoComponent,
         logger.info(s"Successfully enqueued send email job:  $timeStamp : $emailRequest")
     }
 
-    result.map(_ => ())
+    result
   }
 
   def nextJob: Future[Option[SendEmailJob]] = {
-    val eventualResult = findAndUpdate(
-      query = Json.obj("processing" -> Json.toJsFieldJsValueWrapper(false)),
-      update = Json.obj("$set" -> Json.obj("processing" -> Json.toJsFieldJsValueWrapper(true))),
-      sort = Some(Json.obj("timeStampAndCRL" -> Json.toJsFieldJsValueWrapper(1))),
-      fetchNewObject = true
-    )
+    val eventualResult: Future[Option[SendEmailJob]] = collection.findOneAndUpdate(
+      filter = equal("processing", false),
+      update = Updates.set("processing", true)).toFutureOption()
+
 
     eventualResult.onComplete {
-      case Success(result) if (result.value.isDefined) =>
+      case Success(Some(result))  =>
         metricsReporter.reportSuccessfulMarkJobForProcessing()
-        logger.info(s"Successfully marked latest send email job for processing: ${result.result[SendEmailJob]}")
-      case Success(result) if (result.lastError.isDefined && result.lastError.get.err.isEmpty) =>
+        logger.info(s"Successfully marked latest send email job for processing: ${result}")
+      case Success(None)  =>
         logger.debug(s"email queue is empty")
       case m =>
         metricsReporter.reportFailedMarkJobForProcessing()
         logger.error(s"Marking send email job for processing failed. Unexpected MongoDB error: $m")
     }
 
-    eventualResult.map(_.result[SendEmailJob])
+    eventualResult
   }
 
-  def deleteJob(id: BSONObjectID): Future[Unit] = {
-    val result = removeById(id)
+  def deleteJob(id: String): Future[Boolean] = {
+    val result = collection.deleteOne(equal("_id", id)).toFuture().map(_.wasAcknowledged())
     result.onComplete {
       case Success(_) =>
         metricsReporter.reportSuccessfullyRemoveCompletedJob()
@@ -101,20 +101,28 @@ class EmailQueue @Inject()(mongoComponent: ReactiveMongoComponent,
         metricsReporter.reportFailedToRemoveCompletedJob()
         logger.error(s"Could not delete completed send email job: $error")
     }
-    result.map(_=>())
+    result
   }
 
   def resetProcessing: Future[Unit] = {
     val maxAge = dateTimeService.getTimeStamp.minusMinutes(appConfig.emailMaxAgeMins)
-
-    collection.update(ordered = false).one(
-      Json.obj("$and" -> Json.arr(
-        Json.obj("processing" -> Json.toJsFieldJsValueWrapper(true)),
-        Json.obj("timeStampAndCRL" -> Json.obj("$lt" -> maxAge)))
+    val updates = Updates.set("processing", false)
+    collection.updateMany(
+      filter =  Filters.and(
+        Filters.equal("processing", true),
+        Filters.lt("timeStampAndCRL", Codecs.toBson(Json.toJson(maxAge)))
       ),
-      Json.obj("$set" -> Json.obj("processing" -> Json.toJsFieldJsValueWrapper(false))),
-      upsert = false,
-      multi = true
-    ).map(_ => ())
+      updates,
+      UpdateOptions().upsert(true)
+    ).toFuture().map(_ => ())
+  }
+
+  def removeAll:Future[Unit] = {
+    collection.drop().toFuture().map(_ => ())
+  }
+
+  def countDocuments(processing: Boolean) : Future[Long] = {
+    collection.countDocuments(
+      filter = Filters.equal("processing", processing)).toFuture().map(s => s)
   }
 }

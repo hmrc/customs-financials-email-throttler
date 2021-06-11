@@ -17,17 +17,19 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{spy, verify, when}
+import org.mongodb.scala.model.Filters
 import org.scalatest.BeforeAndAfterEach
-import play.api.libs.json.Json
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.bson.BSONObjectID
+import play.api.Configuration
+import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailAddress, EmailRequest}
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
-import uk.gov.hmrc.mongo.MongoConnector
+import uk.gov.hmrc.mongo.play.PlayMongoComponent
 
 import java.time.{OffsetDateTime, ZoneOffset}
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -35,19 +37,20 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
   val mockAppConfig: AppConfig = mock[AppConfig]
   val mockDateTimeService: DateTimeService = mock[DateTimeService]
+  val mockConfiguration = mock[Configuration]
+  val mockApplicationLifeCycle = mock[ApplicationLifecycle]
+  val mongoUri = "mongodb://127.0.0.1:27017/test-customs-email-throttler"
+  when(mockConfiguration.get(ArgumentMatchers.eq("mongodb.uri"))(any)).thenReturn("mongodb://127.0.0.1:27017/test-customs-email-throttler")
+
   when(mockDateTimeService.getTimeStamp).thenCallRealMethod()
 
-  val reactiveMongoComponent: ReactiveMongoComponent = new ReactiveMongoComponent {
-    val mongoUri = "mongodb://127.0.0.1:27017/test-customs-email-throttler"
-
-    override def mongoConnector: MongoConnector = MongoConnector(mongoUri)
-  }
+  val reactiveMongoComponent: PlayMongoComponent = new PlayMongoComponent(mockConfiguration, mockApplicationLifeCycle)
 
   val metricsReporter: MetricsReporterService = mock[MetricsReporterService]
   val emailQueue = new EmailQueue(reactiveMongoComponent, mockAppConfig, mockDateTimeService, metricsReporter)
 
   override def beforeEach: Unit = {
-    await(emailQueue.removeAll())
+    await(emailQueue.removeAll)
   }
 
   "EmailAddress" should {
@@ -64,10 +67,9 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       "insert email job into collection" in {
         val emailRequest = EmailRequest(List.empty, "", Map.empty, force = false, None, None)
         val spyEmailQueue = spy(emailQueue)
+        val result: Boolean = await(spyEmailQueue.enqueueJob(emailRequest))
 
-        spyEmailQueue.enqueueJob(emailRequest)
-
-        verify(spyEmailQueue).insert(ArgumentMatchers.any())(ArgumentMatchers.any())
+        result mustBe true
       }
 
       "insert multiple email job with same time stamp into collection" in {
@@ -79,9 +81,9 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       "delete email job by id" in {
         val spyEmailQueue = spy(emailQueue)
 
-        spyEmailQueue.deleteJob(BSONObjectID.generate())
+        val result = await(spyEmailQueue.deleteJob(UUID.randomUUID().toString))
 
-        verify(spyEmailQueue).removeById(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any())
+        result mustBe true
       }
 
       "get oldest, not processed, send email job" in {
@@ -127,12 +129,12 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
         await(Future.sequence(emailRequests.map(emailQueue.enqueueJob)))
         emailRequests.map(_ => await(emailQueue.nextJob))
 
-        val countAllTrue = await(emailQueue.count(query = Json.obj("processing" -> Json.toJsFieldJsValueWrapper(true))))
+        val countAllTrue: Long = await(emailQueue.countDocuments(true))
         countAllTrue must be(emailRequests.size)
 
         await(emailQueue.resetProcessing)
 
-        val resetCount = await(emailQueue.count(query = Json.obj("processing" -> Json.toJsFieldJsValueWrapper(false))))
+        val resetCount : Long = await(emailQueue.countDocuments(false))
         resetCount must be(3)
       }
 

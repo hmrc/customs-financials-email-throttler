@@ -17,11 +17,10 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.models
 
 import play.api.libs.json.{Json, OFormat}
-import reactivemongo.bson.BSONObjectID
-import java.time.OffsetDateTime
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats.objectIdFormats
 
-case class SendEmailJob(_id: BSONObjectID, emailRequest: EmailRequest, timeStampAndCRL: OffsetDateTime, processing: Boolean)
+import java.time.OffsetDateTime
+
+case class SendEmailJob(_id: String, emailRequest: EmailRequest, timeStampAndCRL: OffsetDateTime, processing: Boolean)
 
 object SendEmailJob {
   implicit val formatSendEmailJob: OFormat[SendEmailJob] = Json.format[SendEmailJob]
