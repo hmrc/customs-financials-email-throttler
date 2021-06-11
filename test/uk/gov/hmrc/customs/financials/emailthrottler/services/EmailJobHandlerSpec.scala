@@ -88,7 +88,8 @@ class EmailJobHandlerSpec extends SpecBase {
         val reactiveMongoComponent: PlayMongoComponent = new PlayMongoComponent(mockConfiguration, lifecycle = mockApplicationLifeCycle)
 
         val metricsReporter = mock[MetricsReporterService]
-        val emailQueue = new EmailQueue(reactiveMongoComponent, appConfig, metricsReporter)
+        val mockDateTimeService = mock[DateTimeService]
+        val emailQueue = new EmailQueue(reactiveMongoComponent, mockDateTimeService, appConfig, metricsReporter)
 
         val emailRequests = Seq(
           EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),

@@ -17,16 +17,17 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import com.mongodb.client.model.Indexes.{ascending, descending}
-import com.mongodb.client.model.Updates
+import com.mongodb.client.model.{ReplaceOptions, Updates}
+import org.mongodb.scala.FindObservable
 import org.mongodb.scala.model.Filters.equal
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions}
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, ReplaceOptions}
 import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailRequest, SendEmailJob}
 import uk.gov.hmrc.mongo.play.PlayMongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
-import java.time.{LocalDateTime, ZoneOffset}
+import java.time.ZoneOffset
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,6 +35,7 @@ import scala.util.{Failure, Success}
 
 @Singleton
 class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
+                           dateTimeService: DateTimeService,
                            appConfig: AppConfig,
                            metricsReporter: MetricsReporterService)
                           (implicit ec: ExecutionContext)
@@ -43,7 +45,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     domainFormat = SendEmailJob.formatSendEmailJob,
     indexes = Seq(
       IndexModel(
-        ascending("lastUpdated"),
+        descending("lastUpdated"),
         IndexOptions().name("email-queue-last-updated-index")
           .background(true)
       )
@@ -52,7 +54,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
   val logger: LoggerLike = Logger(this.getClass)
 
   def enqueueJob(emailRequest: EmailRequest): Future[Boolean] = {
-    val timeStamp = LocalDateTime.now()
+    val timeStamp = dateTimeService.getLocalDateTime
     val id = UUID.randomUUID().toString
     val record = SendEmailJob(id, emailRequest, processing = false, timeStamp)
     val result: Future[Boolean] = collection.insertOne(record).toFuture().map(_.wasAcknowledged())
@@ -69,22 +71,25 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
   }
 
   def nextJob: Future[Option[SendEmailJob]] = {
-    val eventualResult: Future[Option[SendEmailJob]] = collection.findOneAndUpdate(
-      filter = equal("processing", false),
-      update = Updates.set("processing", true)).toFutureOption()
-
-    eventualResult.onComplete {
-      case Success(Some(result))  =>
-        metricsReporter.reportSuccessfulMarkJobForProcessing()
-        logger.info(s"Successfully marked latest send email job for processing: ${result}")
-      case Success(None)  =>
-        logger.debug(s"email queue is empty")
-      case m =>
-        metricsReporter.reportFailedMarkJobForProcessing()
+    val job: Future[Option[SendEmailJob]] = collection.find(equal("processing", false)).sort(ascending("lastUpdated")).toFuture().map(_.headOption)
+    job.flatMap {
+      case Some(value) => {
+        collection.replaceOne(equal("_id", value._id), value.copy(processing = true)).toFuture().map{
+          result => if(result.wasAcknowledged()) {
+            metricsReporter.reportSuccessfulMarkJobForProcessing()
+            logger.info(s"Successfully marked latest send email job for processing: ${value}")
+            Some(value)
+          }else{
+            throw new RuntimeException("Failed to update job for processing")
+          }
+        }
+      }
+      case None => logger.debug(s"email queue is empty"); Future.successful(None)
+    }.recover{
+      case m => metricsReporter.reportFailedMarkJobForProcessing()
         logger.error(s"Marking send email job for processing failed. Unexpected MongoDB error: $m")
+        throw m
     }
-
-    eventualResult
   }
 
   def deleteJob(id: String): Future[Boolean] = {
@@ -101,7 +106,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
   }
 
   def resetProcessing: Future[Unit] = {
-    val maxAge = LocalDateTime.now().minusMinutes(appConfig.emailMaxAgeMins)
+    val maxAge = dateTimeService.getLocalDateTime.minusMinutes(appConfig.emailMaxAgeMins)
     val updates = Updates.set("processing", false)
     collection.updateMany(
       filter =  Filters.and(
