@@ -109,20 +109,11 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     val maxAge = dateTimeService.getLocalDateTime.minusMinutes(appConfig.emailMaxAgeMins)
     val updates = Updates.set("processing", false)
     collection.updateMany(
-      filter =  Filters.and(
+      filter = Filters.and(
         Filters.equal("processing", true),
         Filters.lt("lastUpdated", maxAge.toInstant(ZoneOffset.UTC))
       ),
       updates
     ).toFuture().map(_ => ())
-  }
-
-  def removeAll:Future[Unit] = {
-    collection.drop().toFuture().map(_ => ())
-  }
-
-  def countDocuments(processing: Boolean) : Future[Long] = {
-    collection.countDocuments(
-      filter = Filters.equal("processing", processing)).toFuture().map(s => s)
   }
 }

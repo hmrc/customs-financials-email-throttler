@@ -17,6 +17,7 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import org.mockito.Mockito.{spy, when}
+import org.mongodb.scala.model.Filters
 import org.scalatest.BeforeAndAfterEach
 import play.api
 import play.api.inject
@@ -122,13 +123,15 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
         running(app) {
           await(Future.sequence(emailRequests.map((emailRequest: EmailRequest) => emailQueue.enqueueJob(emailRequest))))
           emailRequests.map(_ => await(emailQueue.nextJob))
-
-          val countAllTrue: Long = await(emailQueue.countDocuments(true))
+          val emailQueueCollection = emailQueue.collection
+          val countAllTrue: Long = await(emailQueueCollection.countDocuments(
+                                    filter = Filters.equal("processing", true)).toFuture().map(s => s))
           countAllTrue must be(emailRequests.size)
 
           await(emailQueue.resetProcessing)
 
-          val resetCount: Long = await(emailQueue.countDocuments(false))
+          val resetCount: Long = await(emailQueueCollection.countDocuments(
+            filter = Filters.equal("processing", false)).toFuture().map(s => s))
           resetCount must be(3)
 
           await(dropData)

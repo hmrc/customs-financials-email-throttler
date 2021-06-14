@@ -79,6 +79,13 @@ class EmailJobHandlerSpec extends SpecBase {
         verify(mockEmailQueue).deleteJob(ArgumentMatchers.any())
       }
 
+      "housekeeping " in new MockedEmailJobHandlerScenario {
+
+        service.houseKeeping()
+
+        verify(mockEmailQueue).resetProcessing
+      }
+
       "integration" in {
         val appConfig = mock[AppConfig]
         val mockConfiguration = mock[Configuration]
@@ -108,6 +115,8 @@ class EmailJobHandlerSpec extends SpecBase {
 
         reactiveMongoComponent.client.close()
       }
+
+
     }
 
   }
