@@ -24,7 +24,7 @@ import play.api.http.Status
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import uk.gov.hmrc.http._
 
-import java.time.OffsetDateTime
+import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -142,10 +142,10 @@ class MetricsReporterServiceSpec extends SpecBase {
 
   trait Setup {
     val mockDateTimeService: DateTimeService = mock[DateTimeService]
-    val startTimestamp: OffsetDateTime = OffsetDateTime.parse("2018-11-09T17:15:30+01:00")
-    val endTimestamp: OffsetDateTime = OffsetDateTime.parse("2018-11-09T17:15:35+01:00")
+    val startTimestamp: LocalDateTime = LocalDateTime.of(2018, 11, 9, 17, 15, 30, 1)
+    val endTimestamp: LocalDateTime = LocalDateTime.of(2018, 11, 9, 17, 15, 35, 1)
     val elapsedTimeInMillis: Long = 5000L // endTimestamp - startTimestamp
-    when(mockDateTimeService.getTimeStamp)
+    when(mockDateTimeService.getLocalDateTime)
       .thenReturn(startTimestamp)
       .thenReturn(endTimestamp)
 

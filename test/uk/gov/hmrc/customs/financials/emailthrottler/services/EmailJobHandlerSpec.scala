@@ -17,15 +17,17 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.bson.BSONObjectID
+import play.api.Configuration
+import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailRequest, SendEmailJob}
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
-import uk.gov.hmrc.mongo.MongoConnector
+import uk.gov.hmrc.mongo.play.PlayMongoComponent
 
-import java.time.{OffsetDateTime, ZoneOffset}
+import java.time.LocalDateTime
+import java.util.UUID
 import scala.concurrent.Future
 
 class EmailJobHandlerSpec extends SpecBase {
@@ -35,15 +37,15 @@ class EmailJobHandlerSpec extends SpecBase {
   class MockedEmailJobHandlerScenario() {
 
     val sendEmailJob: SendEmailJob = SendEmailJob(
-      BSONObjectID.generate,
+      UUID.randomUUID().toString,
       EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
-      OffsetDateTime.of(2019,10,8,15,1,0,0,ZoneOffset.UTC),
-      processing = true
+      processing = true,
+      LocalDateTime.of(2019,10,8,15,1,0,0)
     )
 
     val mockEmailQueue: EmailQueue = mock[EmailQueue]
     when(mockEmailQueue.nextJob).thenReturn(Future.successful(Some(sendEmailJob)))
-    when(mockEmailQueue.deleteJob(ArgumentMatchers.any())).thenReturn(Future.successful(()))
+    when(mockEmailQueue.deleteJob(ArgumentMatchers.any())).thenReturn(Future.successful(true))
 
     val mockEmailNotificationService: EmailNotificationService = mock[EmailNotificationService]
     when(mockEmailNotificationService.sendEmail(ArgumentMatchers.any())).thenReturn(Future.successful(true))
@@ -77,17 +79,26 @@ class EmailJobHandlerSpec extends SpecBase {
         verify(mockEmailQueue).deleteJob(ArgumentMatchers.any())
       }
 
+      "housekeeping " in new MockedEmailJobHandlerScenario {
+
+        service.houseKeeping()
+
+        verify(mockEmailQueue).resetProcessing
+      }
+
       "integration" in {
         val appConfig = mock[AppConfig]
-        val dateTimeService = new DateTimeService
-        val reactiveMongoComponent: ReactiveMongoComponent = new ReactiveMongoComponent {
-          val mongoUri = "mongodb://127.0.0.1:27017/test-customs-email-throttler"
-          override def mongoConnector: MongoConnector = MongoConnector(mongoUri)
-        }
-        val metricsReporter = mock[MetricsReporterService]
-        val emailQueue = new EmailQueue(reactiveMongoComponent, appConfig, dateTimeService, metricsReporter)
-        await(emailQueue.removeAll())
+        val mockConfiguration = mock[Configuration]
+        val mockApplicationLifeCycle = mock[ApplicationLifecycle]
+        when(mockConfiguration.get(ArgumentMatchers.eq("mongodb.uri"))(any)).thenReturn("mongodb://127.0.0.1:27017/test-customs-email-throttler")
 
+        val reactiveMongoComponent: PlayMongoComponent = new PlayMongoComponent(mockConfiguration, lifecycle = mockApplicationLifeCycle)
+
+        val metricsReporter = mock[MetricsReporterService]
+        val mockDateTimeService = mock[DateTimeService]
+        val emailQueue = new EmailQueue(reactiveMongoComponent, mockDateTimeService, appConfig, metricsReporter)
+
+        when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
         val emailRequests = Seq(
           EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
           EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
@@ -102,8 +113,10 @@ class EmailJobHandlerSpec extends SpecBase {
         await(service.processJob())
         await(service.processJob())
 
-        reactiveMongoComponent.mongoConnector.close()
+        reactiveMongoComponent.client.close()
       }
+
+
     }
 
   }

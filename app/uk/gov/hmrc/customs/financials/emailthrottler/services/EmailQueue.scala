@@ -16,47 +16,48 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
-import play.api.libs.json.Json
-import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.commands.WriteResult
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.BSONObjectID
-import reactivemongo.play.json.collection.Helpers.idWrites
+import com.mongodb.client.model.Indexes.{ascending, descending}
+import com.mongodb.client.model.{ReplaceOptions, Updates}
+import org.mongodb.scala.FindObservable
+import org.mongodb.scala.model.Filters.equal
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, ReplaceOptions}
+import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailRequest, SendEmailJob}
-import uk.gov.hmrc.mongo.ReactiveRepository
-import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import uk.gov.hmrc.mongo.play.PlayMongoComponent
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
+import java.time.ZoneOffset
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 @Singleton
-class EmailQueue @Inject()(mongoComponent: ReactiveMongoComponent,
-                           appConfig: AppConfig,
+class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
                            dateTimeService: DateTimeService,
+                           appConfig: AppConfig,
                            metricsReporter: MetricsReporterService)
                           (implicit ec: ExecutionContext)
-  extends ReactiveRepository[SendEmailJob, BSONObjectID](
-    collectionName = "emailQueue",
-    mongo = mongoComponent.mongoConnector.db,
+  extends PlayMongoRepository[SendEmailJob](
+    collectionName = "email-queue",
+    mongoComponent = mongoComponent,
     domainFormat = SendEmailJob.formatSendEmailJob,
-    idFormat = ReactiveMongoFormats.objectIdFormats) {
+    indexes = Seq(
+      IndexModel(
+        descending("lastUpdated"),
+        IndexOptions().name("email-queue-last-updated-index")
+          .background(true)
+      )
+    )) {
 
-  private val timestampIndex = Index(
-    Seq("timeStampAndCRL" -> IndexType.Ascending),
-    name = Some("timestampIndex"),
-    unique = false,
-    background = true,
-    sparse = false)
+  val logger: LoggerLike = Logger(this.getClass)
 
-  private val _ = collection.indexesManager.ensure(timestampIndex)
-
-
-  def enqueueJob(emailRequest: EmailRequest): Future[Unit] = {
-    val timeStamp = dateTimeService.getTimeStamp
-
-    val result: Future[WriteResult] = insert(SendEmailJob(BSONObjectID.generate, emailRequest, timeStamp, processing = false))
+  def enqueueJob(emailRequest: EmailRequest): Future[Boolean] = {
+    val timeStamp = dateTimeService.getLocalDateTime
+    val id = UUID.randomUUID().toString
+    val record = SendEmailJob(id, emailRequest, processing = false, timeStamp)
+    val result: Future[Boolean] = collection.insertOne(record).toFuture().map(_.wasAcknowledged())
     result.onComplete {
       case Failure(error) =>
         metricsReporter.reportFailedEnqueueJob()
@@ -65,34 +66,28 @@ class EmailQueue @Inject()(mongoComponent: ReactiveMongoComponent,
         metricsReporter.reportSuccessfulEnqueueJob()
         logger.info(s"Successfully enqueued send email job:  $timeStamp : $emailRequest")
     }
-
-    result.map(_ => ())
+    result
   }
 
   def nextJob: Future[Option[SendEmailJob]] = {
-    val eventualResult = findAndUpdate(
-      query = Json.obj("processing" -> Json.toJsFieldJsValueWrapper(false)),
-      update = Json.obj("$set" -> Json.obj("processing" -> Json.toJsFieldJsValueWrapper(true))),
-      sort = Some(Json.obj("timeStampAndCRL" -> Json.toJsFieldJsValueWrapper(1))),
-      fetchNewObject = true
-    )
+    val fMaybeSendEmailJob: Future[Option[SendEmailJob]] =
+      collection.find(equal("processing", false))
+        .sort(ascending("lastUpdated"))
+        .toFuture()
+        .map(_.headOption)
 
-    eventualResult.onComplete {
-      case Success(result) if (result.value.isDefined) =>
-        metricsReporter.reportSuccessfulMarkJobForProcessing()
-        logger.info(s"Successfully marked latest send email job for processing: ${result.result[SendEmailJob]}")
-      case Success(result) if (result.lastError.isDefined && result.lastError.get.err.isEmpty) =>
-        logger.debug(s"email queue is empty")
-      case m =>
-        metricsReporter.reportFailedMarkJobForProcessing()
+    fMaybeSendEmailJob.flatMap {
+      case Some(value) => replaceJob(value)
+      case None => logger.debug(s"email queue is empty"); Future.successful(None)
+    }.recover {
+      case m => metricsReporter.reportFailedMarkJobForProcessing()
         logger.error(s"Marking send email job for processing failed. Unexpected MongoDB error: $m")
+        throw m
     }
-
-    eventualResult.map(_.result[SendEmailJob])
   }
 
-  def deleteJob(id: BSONObjectID): Future[Unit] = {
-    val result = removeById(id)
+  def deleteJob(id: String): Future[Boolean] = {
+    val result = collection.deleteOne(equal("_id", id)).toFuture().map(_.wasAcknowledged())
     result.onComplete {
       case Success(_) =>
         metricsReporter.reportSuccessfullyRemoveCompletedJob()
@@ -101,20 +96,33 @@ class EmailQueue @Inject()(mongoComponent: ReactiveMongoComponent,
         metricsReporter.reportFailedToRemoveCompletedJob()
         logger.error(s"Could not delete completed send email job: $error")
     }
-    result.map(_=>())
+    result
   }
 
   def resetProcessing: Future[Unit] = {
-    val maxAge = dateTimeService.getTimeStamp.minusMinutes(appConfig.emailMaxAgeMins)
-
-    collection.update(ordered = false).one(
-      Json.obj("$and" -> Json.arr(
-        Json.obj("processing" -> Json.toJsFieldJsValueWrapper(true)),
-        Json.obj("timeStampAndCRL" -> Json.obj("$lt" -> maxAge)))
+    val maxAge = dateTimeService.getLocalDateTime.minusMinutes(appConfig.emailMaxAgeMins)
+    val updates = Updates.set("processing", false)
+    collection.updateMany(
+      filter = Filters.and(
+        Filters.equal("processing", true),
+        Filters.lt("lastUpdated", maxAge.toInstant(ZoneOffset.UTC))
       ),
-      Json.obj("$set" -> Json.obj("processing" -> Json.toJsFieldJsValueWrapper(false))),
-      upsert = false,
-      multi = true
-    ).map(_ => ())
+      updates
+    ).toFuture().map(_ => ())
+  }
+
+  private def replaceJob(sendEmailJob: SendEmailJob): Future[Option[SendEmailJob]] = {
+    collection
+      .replaceOne(equal("_id", sendEmailJob._id), sendEmailJob.copy(processing = true))
+      .toFuture()
+      .map { result =>
+        if (result.wasAcknowledged()) {
+          metricsReporter.reportSuccessfulMarkJobForProcessing()
+          logger.info(s"Successfully marked latest send email job for processing: ${sendEmailJob}")
+          Some(sendEmailJob)
+        } else {
+          throw new RuntimeException("Failed to update job for processing")
+        }
+      }
   }
 }

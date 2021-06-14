@@ -21,7 +21,7 @@ import com.kenshoo.play.metrics.Metrics
 import play.api.http.Status
 import uk.gov.hmrc.http.{BadRequestException, NotFoundException, Upstream4xxResponse, Upstream5xxResponse, UpstreamErrorResponse}
 
-import java.time.OffsetDateTime
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -31,7 +31,7 @@ class MetricsReporterService @Inject()(val metrics: Metrics, dateTimeService: Da
 
   def withResponseTimeLogging[T](resourceName: String)(future: Future[T])
                                 (implicit ec: ExecutionContext): Future[T] = {
-    val startTime = dateTimeService.getTimeStamp
+    val startTime = dateTimeService.getLocalDateTime
     future.andThen { case response =>
       val httpResponseCode = response match {
         case Success(_) => Status.OK
@@ -40,15 +40,15 @@ class MetricsReporterService @Inject()(val metrics: Metrics, dateTimeService: Da
         case Failure(exception: UpstreamErrorResponse) => exception.statusCode
         case Failure(_) => Status.INTERNAL_SERVER_ERROR
       }
-      updateResponseTimeHistogram(resourceName, httpResponseCode, startTime, dateTimeService.getTimeStamp)
+      updateResponseTimeHistogram(resourceName, httpResponseCode, startTime, dateTimeService.getLocalDateTime)
     }
   }
 
   private def updateResponseTimeHistogram(resourceName: String, httpResponseCode: Int,
-                                          startTimestamp: OffsetDateTime, endTimestamp: OffsetDateTime): Unit = {
+                                          startTimestamp: LocalDateTime, endTimestamp: LocalDateTime): Unit = {
     val RESPONSE_TIMES_METRIC = "responseTimes"
     val histogramName = s"$RESPONSE_TIMES_METRIC.$resourceName.$httpResponseCode"
-    val elapsedTimeInMillis = endTimestamp.toInstant.toEpochMilli - startTimestamp.toInstant.toEpochMilli
+    val elapsedTimeInMillis = endTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli - startTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli
     metrics.defaultRegistry.histogram(histogramName).update(elapsedTimeInMillis)
   }
 
