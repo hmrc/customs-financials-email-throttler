@@ -66,26 +66,20 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
         metricsReporter.reportSuccessfulEnqueueJob()
         logger.info(s"Successfully enqueued send email job:  $timeStamp : $emailRequest")
     }
-
     result
   }
 
   def nextJob: Future[Option[SendEmailJob]] = {
-    val job: Future[Option[SendEmailJob]] = collection.find(equal("processing", false)).sort(ascending("lastUpdated")).toFuture().map(_.headOption)
-    job.flatMap {
-      case Some(value) => {
-        collection.replaceOne(equal("_id", value._id), value.copy(processing = true)).toFuture().map{
-          result => if(result.wasAcknowledged()) {
-            metricsReporter.reportSuccessfulMarkJobForProcessing()
-            logger.info(s"Successfully marked latest send email job for processing: ${value}")
-            Some(value)
-          }else{
-            throw new RuntimeException("Failed to update job for processing")
-          }
-        }
-      }
+    val fMaybeSendEmailJob: Future[Option[SendEmailJob]] =
+      collection.find(equal("processing", false))
+        .sort(ascending("lastUpdated"))
+        .toFuture()
+        .map(_.headOption)
+
+    fMaybeSendEmailJob.flatMap {
+      case Some(value) => replaceJob(value)
       case None => logger.debug(s"email queue is empty"); Future.successful(None)
-    }.recover{
+    }.recover {
       case m => metricsReporter.reportFailedMarkJobForProcessing()
         logger.error(s"Marking send email job for processing failed. Unexpected MongoDB error: $m")
         throw m
@@ -115,5 +109,20 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
       ),
       updates
     ).toFuture().map(_ => ())
+  }
+
+  private def replaceJob(sendEmailJob: SendEmailJob): Future[Option[SendEmailJob]] = {
+    collection
+      .replaceOne(equal("_id", sendEmailJob._id), sendEmailJob.copy(processing = true))
+      .toFuture()
+      .map { result =>
+        if (result.wasAcknowledged()) {
+          metricsReporter.reportSuccessfulMarkJobForProcessing()
+          logger.info(s"Successfully marked latest send email job for processing: ${sendEmailJob}")
+          Some(sendEmailJob)
+        } else {
+          throw new RuntimeException("Failed to update job for processing")
+        }
+      }
   }
 }
