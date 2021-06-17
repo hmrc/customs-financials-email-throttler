@@ -77,7 +77,7 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
         }
       }
 
-      "get oldest, not processed, send email job" in new Setup  {
+   /*   "get oldest, not processed, send email job" in new Setup  {
 
         when(mockDateTimeService.getLocalDateTime)
           .thenReturn(LocalDateTime.of(2019,10,8,15,1,0,0))
@@ -102,7 +102,7 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
           await(dropData)
         }
-      }
+      }*/
 
       "reset the processing flag for emails which are older than maximum age" in new Setup  {
         when(mockDateTimeService.getLocalDateTime)
