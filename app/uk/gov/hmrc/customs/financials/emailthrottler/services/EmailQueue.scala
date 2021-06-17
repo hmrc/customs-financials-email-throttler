@@ -45,7 +45,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     domainFormat = SendEmailJob.formatSendEmailJob,
     indexes = Seq(
       IndexModel(
-        descending("lastUpdated"),
+        ascending("lastUpdated"),
         IndexOptions().name("email-queue-last-updated-index")
           .background(true)
       )
@@ -70,15 +70,17 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
   }
 
   def nextJob: Future[Option[SendEmailJob]] = {
-    val fMaybeSendEmailJob: Future[Option[SendEmailJob]] =
-      collection.find(equal("processing", false))
-        .sort(ascending("lastUpdated"))
-        .toFuture()
-        .map(_.headOption)
-
-    fMaybeSendEmailJob.flatMap {
-      case Some(value) => replaceJob(value)
-      case None => logger.debug(s"email queue is empty"); Future.successful(None)
+    collection.findOneAndUpdate(
+      equal("processing", false),
+      Updates.set("processing", true)
+    ).toFutureOption().map {
+      case emailJob@Some(value) =>
+        metricsReporter.reportSuccessfulMarkJobForProcessing()
+        logger.info(s"Successfully marked latest send email job for processing: ${value}")
+        emailJob
+      case None =>
+        logger.debug(s"email queue is empty")
+        None
     }.recover {
       case m => metricsReporter.reportFailedMarkJobForProcessing()
         logger.error(s"Marking send email job for processing failed. Unexpected MongoDB error: $m")
@@ -109,20 +111,5 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
       ),
       updates
     ).toFuture().map(_ => ())
-  }
-
-  private def replaceJob(sendEmailJob: SendEmailJob): Future[Option[SendEmailJob]] = {
-    collection
-      .replaceOne(equal("_id", sendEmailJob._id), sendEmailJob.copy(processing = true))
-      .toFuture()
-      .map { result =>
-        if (result.wasAcknowledged()) {
-          metricsReporter.reportSuccessfulMarkJobForProcessing()
-          logger.info(s"Successfully marked latest send email job for processing: ${sendEmailJob}")
-          Some(sendEmailJob)
-        } else {
-          throw new RuntimeException("Failed to update job for processing")
-        }
-      }
   }
 }
