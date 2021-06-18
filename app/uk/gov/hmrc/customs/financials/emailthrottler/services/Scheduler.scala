@@ -17,6 +17,7 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import akka.actor.ActorSystem
+import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 
 import javax.inject.{Inject, Singleton}
@@ -29,11 +30,15 @@ class Scheduler @Inject()(appConfig: AppConfig,
                           emailJobHandler: EmailJobHandler,
                           actorSystem: ActorSystem)(implicit executionContext: ExecutionContext) {
 
+  val log: LoggerLike = Logger(this.getClass)
+
   actorSystem.scheduler.schedule(initialDelay = 0 seconds, interval = 1 / appConfig.emailsPerInstancePerSecond second) {
     emailJobHandler.processJob()
   }
 
   actorSystem.scheduler.schedule(initialDelay = 10 minutes, interval = appConfig.housekeepingHours hours) {
+    log.info("start: emailJobHandler.houseKeeping()")
     emailJobHandler.houseKeeping()
+    log.info("end: emailJobHandler.houseKeeping()")
   }
 }
