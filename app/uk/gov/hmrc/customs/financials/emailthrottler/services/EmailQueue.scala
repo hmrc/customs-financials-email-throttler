@@ -47,7 +47,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
       IndexModel(
         ascending("lastUpdated"),
         IndexOptions().name("email-queue-last-updated-index")
-          .background(true)
+          .background(false)
       )
     )) {
 
