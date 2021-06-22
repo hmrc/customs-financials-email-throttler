@@ -20,11 +20,11 @@ import org.mockito.Mockito.{spy, when}
 import org.mongodb.scala.model.Filters
 import org.scalatest.BeforeAndAfterEach
 import play.api
-import play.api.inject
+import play.api.{Application, inject}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.running
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
-import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailAddress, EmailRequest}
+import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailAddress, EmailRequest, SendEmailJob}
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 
 import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
@@ -77,32 +77,33 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
         }
       }
 
-   /*   "get oldest, not processed, send email job" in new Setup  {
+    "send all email jobs with processing set to false" in {
+      val mockScheduler = mock[Scheduler]
 
-        when(mockDateTimeService.getLocalDateTime)
-          .thenReturn(LocalDateTime.of(2019,10,8,15,1,0,0))
-          .thenReturn(LocalDateTime.of(2019,10,8,15,2,0,0))
-          .thenReturn(LocalDateTime.of(2019,10,8,15,3,0,0))
+      val app: Application = new GuiceApplicationBuilder()
+        .overrides(api.inject.bind[Scheduler].toInstance(mockScheduler))
+        .build()
 
-        val emailRequests = Seq(
-          EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
-          EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
-          EmailRequest(List.empty, "id_3", Map.empty, force = false, None, None)
-        )
-        running(app) {
-          await(Future.sequence(emailRequests.map((emailRequest: EmailRequest) => emailQueue.enqueueJob(emailRequest))))
+      val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
 
-          val expectedEmailRequest = EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None)
-          val job = await(emailQueue.nextJob)
-          job.map(_.emailRequest) mustBe Some(expectedEmailRequest)
+      val oldestJob = SendEmailJob("id-1", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = false, LocalDateTime.of(2021,4,10,1,0,0))
+      val latestJob = SendEmailJob("id-2", EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None), processing = false, LocalDateTime.of(2021,4,10,5,0,0))
 
-          val expectedEmailRequest2 = EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None)
-          val job2 = await(emailQueue.nextJob)
-          job2.map(_.emailRequest) mustBe Some(expectedEmailRequest2)
+      running(app) {
+        await(for {
+          _ <- emailQueue.collection.insertMany(Seq(latestJob,oldestJob)).toFuture()
+          result1 <- emailQueue.nextJob
+          result2 <- emailQueue.nextJob
+          result3 <- emailQueue.nextJob
+          _ <- emailQueue.collection.drop().toFuture()
+        } yield {
+          result1.nonEmpty mustBe true
+          result2.nonEmpty mustBe true
+          result3.nonEmpty mustBe false
+        })
+      }
 
-          await(dropData)
-        }
-      }*/
+    }
 
       "reset the processing flag for emails which are older than maximum age" in new Setup  {
         when(mockDateTimeService.getLocalDateTime)
