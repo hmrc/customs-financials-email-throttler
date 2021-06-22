@@ -77,30 +77,17 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       }
     }
 
-    "get oldest, not processed, send email job" in new Setup {
+    "get oldest, not processed, send email job" in {
+      val app: Application = new GuiceApplicationBuilder().build()
+      val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
 
-      when(mockDateTimeService.getLocalDateTime)
-        .thenReturn(LocalDateTime.of(2019, 10, 8, 15, 1, 0, 0))
-        .thenReturn(LocalDateTime.of(2019, 10, 8, 15, 2, 0, 0))
-        .thenReturn(LocalDateTime.of(2019, 10, 8, 15, 3, 0, 0))
+      val job1 = SendEmailJob("id-1", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = false, LocalDateTime.now())
+      val job2 = SendEmailJob("id-2", EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None), processing = false, LocalDateTime.now())
 
-      val emailRequests = Seq(
-        EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
-        EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
-        EmailRequest(List.empty, "id_3", Map.empty, force = false, None, None)
-      )
       running(app) {
-        await(Future.sequence(emailRequests.map((emailRequest: EmailRequest) => emailQueue.enqueueJob(emailRequest))))
-
-        val expectedEmailRequest = EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None)
-        val job = await(emailQueue.nextJob)
-        job.map(_.emailRequest) mustBe Some(expectedEmailRequest)
-
-        val expectedEmailRequest2 = EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None)
-        val job2 = await(emailQueue.nextJob)
-        job2.map(_.emailRequest) mustBe Some(expectedEmailRequest2)
-
-        await(dropData)
+        await(emailQueue.collection.insertMany(Seq(job1, job2)).toFuture())
+        await(emailQueue.nextJob) mustBe Some(job1)
+        await(emailQueue.nextJob) mustBe Some(job2)
       }
     }
 
@@ -110,10 +97,10 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
 
       val job1 = SendEmailJob("id-1", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = true, LocalDateTime.now().minusMinutes(15))
-      val job2 = SendEmailJob("id-2", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = true, LocalDateTime.now().minusHours(2))
-      val job3 = SendEmailJob("id-3", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = true, LocalDateTime.now().minusMinutes(15))
-      val job4 = SendEmailJob("id-4", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = true, LocalDateTime.now().minusHours(2))
-      val job5 = SendEmailJob("id-5", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = true, LocalDateTime.now().minusMinutes(15))
+      val job2 = SendEmailJob("id-2", EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None), processing = true, LocalDateTime.now().minusHours(2))
+      val job3 = SendEmailJob("id-3", EmailRequest(List.empty, "id_3", Map.empty, force = false, None, None), processing = true, LocalDateTime.now().minusMinutes(15))
+      val job4 = SendEmailJob("id-4", EmailRequest(List.empty, "id_4", Map.empty, force = false, None, None), processing = true, LocalDateTime.now().minusHours(2))
+      val job5 = SendEmailJob("id-5", EmailRequest(List.empty, "id_5", Map.empty, force = false, None, None), processing = true, LocalDateTime.now().minusMinutes(15))
 
       running(app) {
         await(emailQueue.collection.insertMany(Seq(job1, job2, job3, job4, job5)).toFuture())
