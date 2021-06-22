@@ -45,7 +45,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     domainFormat = SendEmailJob.formatSendEmailJob,
     indexes = Seq(
       IndexModel(
-        ascending("lastUpdated"),
+        descending("lastUpdated"),
         IndexOptions().name("email-queue-last-updated-index")
           .background(false)
       )

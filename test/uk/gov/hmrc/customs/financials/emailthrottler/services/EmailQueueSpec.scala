@@ -77,18 +77,29 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       }
     }
 
-    "get oldest, not processed, send email job" in {
+    "send all email jobs with processing set to false" in {
       val app: Application = new GuiceApplicationBuilder().build()
       val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
 
-      val job1 = SendEmailJob("id-1", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = false, LocalDateTime.now())
-      val job2 = SendEmailJob("id-2", EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None), processing = false, LocalDateTime.now())
+      val job1 = SendEmailJob("id-1", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = false, LocalDateTime.now().minusMinutes(20))
+      val job2 = SendEmailJob("id-2", EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None), processing = false, LocalDateTime.now().minusMinutes(10))
 
       running(app) {
-        await(emailQueue.collection.insertMany(Seq(job1, job2)).toFuture())
-        await(emailQueue.nextJob) mustBe Some(job1)
-        await(emailQueue.nextJob) mustBe Some(job2)
+
+        await(for{
+          _ <- emailQueue.collection.insertOne(job1).toFuture()
+          _ <- emailQueue.collection.insertOne(job2).toFuture()
+          result1 <- emailQueue.nextJob
+          result2 <- emailQueue.nextJob
+          result3 <- emailQueue.nextJob
+          _ <- emailQueue.collection.drop().toFuture()
+        } yield {
+          result1.nonEmpty mustBe true
+          result2.nonEmpty mustBe true
+          result3.nonEmpty mustBe false
+        })
       }
+
     }
 
     "reset the processing flag for emails which are older than maximum age (30 minutes)" in {
