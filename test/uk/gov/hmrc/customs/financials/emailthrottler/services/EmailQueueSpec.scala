@@ -20,14 +20,13 @@ import org.mockito.Mockito.{spy, when}
 import org.mongodb.scala.model.Filters
 import org.scalatest.BeforeAndAfterEach
 import play.api
-import play.api.{Application, inject}
+import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.running
-import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailAddress, EmailRequest, SendEmailJob}
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 
-import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+import java.time.LocalDateTime
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -78,17 +77,20 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
     }
 
     "send all email jobs with processing set to false" in {
-      val app: Application = new GuiceApplicationBuilder().build()
+      val mockScheduler = mock[Scheduler]
+
+      val app: Application = new GuiceApplicationBuilder()
+        .overrides(api.inject.bind[Scheduler].toInstance(mockScheduler))
+        .build()
+
       val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
 
       val job1 = SendEmailJob("id-1", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = false, LocalDateTime.now().minusMinutes(20))
       val job2 = SendEmailJob("id-2", EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None), processing = false, LocalDateTime.now().minusMinutes(10))
 
       running(app) {
-
-        await(for{
-          _ <- emailQueue.collection.insertOne(job1).toFuture()
-          _ <- emailQueue.collection.insertOne(job2).toFuture()
+        await(for {
+          _ <- emailQueue.collection.insertMany(Seq(job1, job2)).toFuture()
           result1 <- emailQueue.nextJob
           result2 <- emailQueue.nextJob
           result3 <- emailQueue.nextJob
@@ -103,8 +105,11 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
     }
 
     "reset the processing flag for emails which are older than maximum age (30 minutes)" in {
+      val mockScheduler = mock[Scheduler]
 
-      val app: Application = new GuiceApplicationBuilder().build()
+      val app: Application = new GuiceApplicationBuilder()
+        .overrides(api.inject.bind[Scheduler].toInstance(mockScheduler))
+        .build()
       val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
 
       val job1 = SendEmailJob("id-1", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = true, LocalDateTime.now().minusMinutes(15))
@@ -126,8 +131,11 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
   trait Setup {
     val mockDateTimeService: DateTimeService = mock[DateTimeService]
+    val mockScheduler: Scheduler = mock[Scheduler]
+
     val app: Application = new GuiceApplicationBuilder()
       .overrides(api.inject.bind[DateTimeService].toInstance(mockDateTimeService))
+      .overrides(api.inject.bind[Scheduler].toInstance(mockScheduler))
       .build()
     val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
     await(dropData)
