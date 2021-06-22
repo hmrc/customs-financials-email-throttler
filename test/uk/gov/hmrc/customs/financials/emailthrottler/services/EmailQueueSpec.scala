@@ -85,19 +85,19 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
       val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
 
-      val job1 = SendEmailJob("id-1", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = false, LocalDateTime.now().minusMinutes(20))
-      val job2 = SendEmailJob("id-2", EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None), processing = false, LocalDateTime.now().minusMinutes(10))
+      val oldestJob = SendEmailJob("id-1", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = false, LocalDateTime.of(2021,4,10,1,0,0))
+      val latestJob = SendEmailJob("id-2", EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None), processing = false, LocalDateTime.of(2021,4,10,5,0,0))
 
       running(app) {
         await(for {
-          _ <- emailQueue.collection.insertMany(Seq(job1, job2)).toFuture()
+          _ <- emailQueue.collection.insertMany(Seq(latestJob,oldestJob)).toFuture()
           result1 <- emailQueue.nextJob
           result2 <- emailQueue.nextJob
           result3 <- emailQueue.nextJob
           _ <- emailQueue.collection.drop().toFuture()
         } yield {
-          result1.nonEmpty mustBe true
-          result2.nonEmpty mustBe true
+          result1.get mustBe oldestJob
+          result2.get mustBe latestJob
           result3.nonEmpty mustBe false
         })
       }
