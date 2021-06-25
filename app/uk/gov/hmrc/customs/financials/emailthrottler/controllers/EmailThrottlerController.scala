@@ -34,7 +34,7 @@ class EmailThrottlerController @Inject()(emailQueue: EmailQueue, cc: ControllerC
 
   def enqueueEmail(): Action[EmailRequest] = Action.async(parse.json[EmailRequest]) { implicit request =>
     log.info(s"enqueueEmail: send email request enqueued")
-    emailQueue.enqueueJob(request.body)
+    emailQueue.enqueueJob(request.body.formattedEnrolment)
     Future.successful(Accepted(Json.obj("Status" -> "Ok", "message" -> "Email successfully queued")))
   }
 }

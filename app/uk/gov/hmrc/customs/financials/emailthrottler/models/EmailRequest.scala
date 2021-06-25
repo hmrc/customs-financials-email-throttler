@@ -27,8 +27,15 @@ case class EmailRequest(to: List[EmailAddress],
                         templateId: String,
                         parameters: Map[String, String] = Map.empty,
                         force: Boolean = false,
+                        enrolment: Option[String] = None,
                         eventUrl: Option[String] = None,
-                        onSendUrl: Option[String] = None)
+                        onSendUrl: Option[String] = None) {
+
+  def formattedEnrolment: EmailRequest = {
+    val formattedEnrolment = enrolment.map(e => s"HMRC-CUS-ORG~EORINumber~$e")
+    EmailRequest(to, templateId, parameters, force, formattedEnrolment, eventUrl, onSendUrl)
+  }
+}
 
 object EmailRequest {
   implicit val emailAddressFormat: Format[EmailAddress] = implicitly[Format[String]].inmap(EmailAddress, unlift(EmailAddress.unapply))
