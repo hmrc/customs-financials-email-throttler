@@ -23,7 +23,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Result
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest, Helpers}
-import uk.gov.hmrc.customs.financials.emailthrottler.models.EmailRequest
+import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailAddress, EmailRequest}
 import uk.gov.hmrc.customs.financials.emailthrottler.services.EmailQueue
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 
@@ -40,7 +40,19 @@ class EmailThrottlerControllerSpec extends SpecBase {
 
     "ask EmailQueue service to store emails" in new Setup {
       await(controller.enqueueEmail()(fakeRequest))
-      verify(mockEmailQueue).enqueueJob(ArgumentMatchers.any())
+      val expectedResult: EmailRequest = EmailRequest(
+        List(
+          EmailAddress("email1@example.co.uk"),
+          EmailAddress("email1@example.co.uk")
+        ),
+        templateId = "template_for_duty_deferment_email",
+        parameters = Map("param1" -> "value1", "param2" -> "value2"),
+        force = false,
+        enrolment = Some("HMRC-CUS-ORG~EORINumber~GB123456789012"),
+        eventUrl = Some("event.url.co.uk"),
+        onSendUrl = Some("on.send.url.co.uk")
+      )
+      verify(mockEmailQueue).enqueueJob(expectedResult)
     }
   }
 
@@ -54,6 +66,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
         |   "param2": "value2"
         | },
         | "force": false,
+        | "enrolment": "GB123456789012",
         | "eventUrl": "event.url.co.uk",
         | "onSendUrl": "on.send.url.co.uk"
         |}""".stripMargin)
