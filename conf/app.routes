@@ -1,0 +1,3 @@
+# microservice specific routes
+
+POST    /enqueue-email         uk.gov.hmrc.customs.financials.emailthrottler.controllers.EmailThrottlerController.enqueueEmail
