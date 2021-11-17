@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
-import org.mockito.Mockito.{spy, when}
+import org.mockito.Mockito.{mock, spy, when}
 import org.mongodb.scala.model.Filters
 import org.scalatest.BeforeAndAfterEach
 import play.api
@@ -78,7 +78,7 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       }
 
     "send all email jobs with processing set to false" in {
-      val mockScheduler = mock[Scheduler]
+      val mockScheduler = mock(classOf[Scheduler])
 
       val app: Application = new GuiceApplicationBuilder()
         .overrides(api.inject.bind[Scheduler].toInstance(mockScheduler))
@@ -141,8 +141,8 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
   }
 
   trait Setup{
-    val mockAppConfig: AppConfig = mock[AppConfig]
-    val mockDateTimeService: DateTimeService = mock[DateTimeService]
+    val mockAppConfig: AppConfig = mock(classOf[AppConfig])
+    val mockDateTimeService: DateTimeService = mock(classOf[DateTimeService])
     val app = new GuiceApplicationBuilder()
       .overrides(api.inject.bind[DateTimeService].toInstance(mockDateTimeService))
       .build()

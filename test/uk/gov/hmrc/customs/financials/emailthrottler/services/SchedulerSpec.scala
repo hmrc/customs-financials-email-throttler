@@ -17,20 +17,21 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import akka.actor.ActorSystem
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.{times, verify, when, mock}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class SchedulerSpec extends SpecBase {
 
   "Scheduler" should {
     "schedule email sending" in {
-      val mockAppConfig = mock[AppConfig]
+      val mockAppConfig = mock(classOf[AppConfig])
       when(mockAppConfig.emailsPerInstancePerSecond).thenReturn(0.2)
-      val mockEmailJobHandler = mock[EmailJobHandler]
-      val mockActorSystem = mock[ActorSystem]
-      val mockScheduler = mock[akka.actor.Scheduler]
+      val mockEmailJobHandler = mock(classOf[EmailJobHandler])
+      val mockActorSystem = mock(classOf[ActorSystem])
+      val mockScheduler = mock(classOf[akka.actor.Scheduler])
       when(mockActorSystem.scheduler).thenReturn(mockScheduler)
       new Scheduler(mockAppConfig, mockEmailJobHandler, mockActorSystem)
       verify(mockActorSystem, times(2)).scheduler

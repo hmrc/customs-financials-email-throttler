@@ -18,7 +18,7 @@ package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{verify, when}
+import org.mockito.Mockito.{mock, verify, when}
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
@@ -43,11 +43,11 @@ class EmailJobHandlerSpec extends SpecBase {
       LocalDateTime.of(2019,10,8,15,1,0,0)
     )
 
-    val mockEmailQueue: EmailQueue = mock[EmailQueue]
+    val mockEmailQueue: EmailQueue = mock(classOf[EmailQueue])
     when(mockEmailQueue.nextJob).thenReturn(Future.successful(Some(sendEmailJob)))
     when(mockEmailQueue.deleteJob(ArgumentMatchers.any())).thenReturn(Future.successful(true))
 
-    val mockEmailNotificationService: EmailNotificationService = mock[EmailNotificationService]
+    val mockEmailNotificationService: EmailNotificationService = mock(classOf[EmailNotificationService])
     when(mockEmailNotificationService.sendEmail(ArgumentMatchers.any())).thenReturn(Future.successful(true))
 
     val service = new EmailJobHandler(mockEmailQueue, mockEmailNotificationService)
@@ -87,15 +87,15 @@ class EmailJobHandlerSpec extends SpecBase {
       }
 
       "integration" in {
-        val appConfig = mock[AppConfig]
-        val mockConfiguration = mock[Configuration]
-        val mockApplicationLifeCycle = mock[ApplicationLifecycle]
+        val appConfig = mock(classOf[AppConfig])
+        val mockConfiguration = mock(classOf[Configuration])
+        val mockApplicationLifeCycle = mock(classOf[ApplicationLifecycle])
         when(mockConfiguration.get(ArgumentMatchers.eq("mongodb.uri"))(any)).thenReturn("mongodb://127.0.0.1:27017/test-customs-email-throttler")
 
         val reactiveMongoComponent: PlayMongoComponent = new PlayMongoComponent(mockConfiguration, lifecycle = mockApplicationLifeCycle)
 
-        val metricsReporter = mock[MetricsReporterService]
-        val mockDateTimeService = mock[DateTimeService]
+        val metricsReporter = mock(classOf[MetricsReporterService])
+        val mockDateTimeService = mock(classOf[DateTimeService])
         val emailQueue = new EmailQueue(reactiveMongoComponent, mockDateTimeService, appConfig, metricsReporter)
 
         when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
@@ -106,7 +106,7 @@ class EmailJobHandlerSpec extends SpecBase {
         )
         emailRequests.foreach(request => await(emailQueue.enqueueJob(request)))
 
-        val mockEmailNotificationService = mock[EmailNotificationService]
+        val mockEmailNotificationService = mock(classOf[EmailNotificationService])
         when(mockEmailNotificationService.sendEmail(ArgumentMatchers.any())).thenReturn(Future.successful(true))
         val service = new EmailJobHandler(emailQueue, mockEmailNotificationService)
 

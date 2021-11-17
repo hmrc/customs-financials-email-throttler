@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.utils
 
-import org.scalatest.{MustMatchers, WordSpec}
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.must.Matchers
 import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 
-trait SpecBase extends WordSpec with MockitoSugar with MustMatchers with FutureAwaits with DefaultAwaitTimeout
+trait SpecBase extends AnyWordSpec with Matchers with FutureAwaits with DefaultAwaitTimeout

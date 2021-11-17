@@ -19,7 +19,7 @@ package uk.gov.hmrc.customs.financials.emailthrottler.services
 import com.codahale.metrics.{Counter, Histogram, MetricRegistry}
 import com.kenshoo.play.metrics.Metrics
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.{verify, when}
+import org.mockito.Mockito.{mock, verify, when}
 import play.api.http.Status
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import uk.gov.hmrc.http._
@@ -141,7 +141,7 @@ class MetricsReporterServiceSpec extends SpecBase {
   }
 
   trait Setup {
-    val mockDateTimeService: DateTimeService = mock[DateTimeService]
+    val mockDateTimeService: DateTimeService = mock(classOf[DateTimeService])
     val startTimestamp: LocalDateTime = LocalDateTime.of(2018, 11, 9, 17, 15, 30, 1)
     val endTimestamp: LocalDateTime = LocalDateTime.of(2018, 11, 9, 17, 15, 35, 1)
     val elapsedTimeInMillis: Long = 5000L // endTimestamp - startTimestamp
@@ -149,15 +149,15 @@ class MetricsReporterServiceSpec extends SpecBase {
       .thenReturn(startTimestamp)
       .thenReturn(endTimestamp)
 
-    val mockHistogram: Histogram = mock[Histogram]
-    val mockCounter: Counter = mock[Counter]
+    val mockHistogram: Histogram = mock(classOf[Histogram])
+    val mockCounter: Counter = mock(classOf[Counter])
     when(mockCounter.inc()).thenCallRealMethod()
 
-    val mockRegistry: MetricRegistry = mock[MetricRegistry]
+    val mockRegistry: MetricRegistry = mock(classOf[MetricRegistry])
     when(mockRegistry.histogram(ArgumentMatchers.any())).thenReturn(mockHistogram)
     when(mockRegistry.counter(ArgumentMatchers.any())).thenReturn(mockCounter)
 
-    val mockMetrics: Metrics = mock[Metrics]
+    val mockMetrics: Metrics = mock(classOf[Metrics])
     when(mockMetrics.defaultRegistry).thenReturn(mockRegistry)
 
     val metricsReporterService = new MetricsReporterService(mockMetrics, mockDateTimeService)
