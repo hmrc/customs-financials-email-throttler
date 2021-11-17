@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.controllers
 
-import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.verify
+import org.mockito.Mockito.{mock,verify}
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Result
@@ -72,7 +71,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
         |}""".stripMargin)
 
     val fakeRequest: FakeRequest[EmailRequest] = FakeRequest("POST", "/", FakeHeaders(), requestBody.as[EmailRequest])
-    val mockEmailQueue: EmailQueue = mock[EmailQueue]
+    val mockEmailQueue: EmailQueue = mock(classOf[EmailQueue])
     val controller: EmailThrottlerController = new EmailThrottlerController(mockEmailQueue, Helpers.stubControllerComponents())
   }
 }

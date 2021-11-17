@@ -17,7 +17,7 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import org.mockito.ArgumentMatchers.{eq => is, _}
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{mock, when}
 import org.mockito.invocation.InvocationOnMock
 import play.api.http.Status
 import play.api.libs.json.JsString
@@ -62,10 +62,10 @@ class EmailNotificationServiceSpec extends SpecBase {
   }
 
   trait EmailNotificationServiceScenario {
-    implicit val mockAppConfig: AppConfig = mock[AppConfig]
-    implicit val mockHttpClient: HttpClient = mock[HttpClient]
+    implicit val mockAppConfig: AppConfig = mock(classOf[AppConfig])
+    implicit val mockHttpClient: HttpClient = mock(classOf[HttpClient])
 
-    val mockMetricsReporterService: MetricsReporterService = mock[MetricsReporterService]
+    val mockMetricsReporterService: MetricsReporterService = mock(classOf[MetricsReporterService])
     when(mockMetricsReporterService.withResponseTimeLogging(any())(any())(any()))
       .thenAnswer((i: InvocationOnMock) => {i.getArgument[Future[JsString]](1)})
 
