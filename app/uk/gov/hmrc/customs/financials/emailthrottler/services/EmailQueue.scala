@@ -61,7 +61,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     result.onComplete {
       case Failure(error) =>
         metricsReporter.reportFailedEnqueueJob()
-        logger.info(s"Could not enqueue send email job: ${error.getMessage}")
+        logger.error(s"Could not enqueue send email job: ${error.getMessage}")
       case Success(_) =>
         metricsReporter.reportSuccessfulEnqueueJob()
         logger.info(s"Successfully enqueued send email job:  $timeStamp : $emailRequest")
