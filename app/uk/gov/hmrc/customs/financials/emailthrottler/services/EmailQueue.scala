@@ -61,7 +61,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     result.onComplete {
       case Failure(error) =>
         metricsReporter.reportFailedEnqueueJob()
-        logger.error(s"Could not enqueue send email job: ${error.getMessage}")
+        logger.info(s"Could not enqueue send email job: ${error.getMessage}")
       case Success(_) =>
         metricsReporter.reportSuccessfulEnqueueJob()
         logger.info(s"Successfully enqueued send email job:  $timeStamp : $emailRequest")
@@ -82,7 +82,8 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
         logger.debug(s"email queue is empty")
         None
     }.recover {
-      case m => metricsReporter.reportFailedMarkJobForProcessing()
+      case m =>
+        metricsReporter.reportFailedMarkJobForProcessing()
         logger.error(s"Marking send email job for processing failed. Unexpected MongoDB error: $m")
         throw m
     }
