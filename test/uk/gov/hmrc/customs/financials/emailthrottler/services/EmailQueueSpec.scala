@@ -133,45 +133,11 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
           val resetCount: Long = await(emailQueueCollection.countDocuments(
             filter = Filters.equal("processing", false)).toFuture().map(s => s))
-          resetCount must not be(3)
+          resetCount must be(3)
 
           await(dropData)
         }
       }
-
-    "reset the processing flag for emails which are less than maximum age" in new Setup  {
-      when(mockDateTimeService.getLocalDateTime)
-        .thenReturn(LocalDateTime.of(2021,4,7,15,0,0,0))
-        .thenReturn(LocalDateTime.of(2021,4,7,15,1,0,0))
-        .thenReturn(LocalDateTime.of(2021,4,7,15,28,0,0))
-        .thenReturn(LocalDateTime.of(2021,4,7,15,30,0,0))
-        .thenReturn(LocalDateTime.of(2021,4,7,15,31,0,0))
-        .thenReturn(LocalDateTime.of(2021,4,7,15,59,0,0))  // Maximum age
-
-      val emailRequests = Seq(
-        EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
-        EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
-        EmailRequest(List.empty, "id_3", Map.empty, force = false, None, None),
-        EmailRequest(List.empty, "id_4", Map.empty, force = false, None, None),
-        EmailRequest(List.empty, "id_5", Map.empty, force = false, None, None)
-      )
-      running(app) {
-        await(Future.sequence(emailRequests.map((emailRequest: EmailRequest) => emailQueue.enqueueJob(emailRequest))))
-        emailRequests.map(_ => await(emailQueue.nextJob))
-        val emailQueueCollection = emailQueue.collection
-        val countAllTrue: Long = await(emailQueueCollection.countDocuments(
-          filter = Filters.equal("processing", true)).toFuture().map(s => s))
-        countAllTrue must be(emailRequests.size)
-
-        await(emailQueue.resetProcessing)
-
-        val resetCount: Long = await(emailQueueCollection.countDocuments(
-          filter = Filters.equal("processing", false)).toFuture().map(s => s))
-        resetCount must be(3)
-
-        await(dropData)
-      }
-    }
   }
 
   trait Setup{
