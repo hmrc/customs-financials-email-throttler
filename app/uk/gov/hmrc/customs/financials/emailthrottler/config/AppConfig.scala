@@ -18,7 +18,6 @@ package uk.gov.hmrc.customs.financials.emailthrottler.config
 
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
 import javax.inject.{Inject, Singleton}
 
 @Singleton
