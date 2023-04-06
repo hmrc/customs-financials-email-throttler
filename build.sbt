@@ -1,6 +1,7 @@
 import scoverage.ScoverageKeys
-import uk.gov.hmrc.DefaultBuildSettings.{integrationTestSettings, scalaSettings}
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
+import uk.gov.hmrc.DefaultBuildSettings.scalaSettings
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
+import uk.gov.hmrc.DefaultBuildSettings.targetJvm
 
 val appName = "customs-financials-email-throttler"
 
@@ -15,7 +16,8 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     majorVersion                     := 0,
     libraryDependencies              ++= AppDependencies.compile ++ AppDependencies.test,
-    scalaVersion                     := "2.12.11",
+    scalaVersion                     := "2.13.8",
+    targetJvm                        := "jvm-11",
     scalacOptions                    := Seq("-feature", "-deprecation"),
     parallelExecution in Test := false,
     fork in Test := false
