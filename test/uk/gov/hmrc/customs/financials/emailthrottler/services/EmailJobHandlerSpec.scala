@@ -29,6 +29,7 @@ import uk.gov.hmrc.mongo.play.PlayMongoComponent
 import java.time.LocalDateTime
 import java.util.UUID
 import scala.concurrent.Future
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 class EmailJobHandlerSpec extends SpecBase {
 
@@ -91,6 +92,8 @@ class EmailJobHandlerSpec extends SpecBase {
         val mockConfiguration = mock(classOf[Configuration])
         val mockApplicationLifeCycle = mock(classOf[ApplicationLifecycle])
         when(mockConfiguration.get(ArgumentMatchers.eq("mongodb.uri"))(any)).thenReturn("mongodb://127.0.0.1:27017/test-customs-email-throttler")
+        when(mockConfiguration.get[FiniteDuration]("hmrc.mongo.init.timeout"))
+          .thenReturn(5.seconds)
 
         val reactiveMongoComponent: PlayMongoComponent = new PlayMongoComponent(mockConfiguration, lifecycle = mockApplicationLifeCycle)
 
