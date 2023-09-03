@@ -1,3 +1,4 @@
+import sbt.Keys.scalaVersion
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings.scalaSettings
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
@@ -31,4 +32,5 @@ lazy val scoverageSettings = Seq(
   ScoverageKeys.coverageMinimum := 85,
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true
+
 )
