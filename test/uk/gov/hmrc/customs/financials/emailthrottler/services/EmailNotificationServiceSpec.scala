@@ -67,7 +67,9 @@ class EmailNotificationServiceSpec extends SpecBase {
 
     val mockMetricsReporterService: MetricsReporterService = mock(classOf[MetricsReporterService])
     when(mockMetricsReporterService.withResponseTimeLogging(any())(any())(any()))
-      .thenAnswer((i: InvocationOnMock) => {i.getArgument[Future[JsString]](1)})
+      .thenAnswer((i: InvocationOnMock) => {
+        i.getArgument[Future[JsString]](1)
+      })
 
     implicit val hc: HeaderCarrier = HeaderCarrier()
 

@@ -49,7 +49,7 @@ class EmailJobHandlerSpec extends SpecBase {
       UUID.randomUUID().toString,
       EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
       processing = true,
-      LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdMinute,tdSecond,tdNanoSecond)
+      LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdMinute, tdSecond, tdNanoSecond)
     )
 
     val mockEmailQueue: EmailQueue = mock(classOf[EmailQueue])

@@ -42,40 +42,40 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
   }
 
   "EmailQueue" should {
-      "insert email job into collection" in new Setup {
-        running(app){
-          when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
-          val emailRequest = EmailRequest(List.empty, "", Map.empty, force = false, None, None)
-          val spyEmailQueue = spy(emailQueue)
-          val result: Boolean = await(spyEmailQueue.enqueueJob(emailRequest))
-          result mustBe true
+    "insert email job into collection" in new Setup {
+      running(app) {
+        when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
+        val emailRequest = EmailRequest(List.empty, "", Map.empty, force = false, None, None)
+        val spyEmailQueue = spy(emailQueue)
+        val result: Boolean = await(spyEmailQueue.enqueueJob(emailRequest))
+        result mustBe true
 
-          await(dropData)
-        }
+        await(dropData)
       }
+    }
 
-      "insert multiple email job with same time stamp into collection" in new Setup {
-        running(app) {
-          when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
-          val emailRequest = EmailRequest(List.empty, "", Map.empty, force = false, None, None)
-          val eventualResults = (1 to 10).map(_ => emailQueue.enqueueJob(emailRequest))
-          await(Future.sequence(eventualResults))
+    "insert multiple email job with same time stamp into collection" in new Setup {
+      running(app) {
+        when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
+        val emailRequest = EmailRequest(List.empty, "", Map.empty, force = false, None, None)
+        val eventualResults = (1 to 10).map(_ => emailQueue.enqueueJob(emailRequest))
+        await(Future.sequence(eventualResults))
 
-          await(dropData)
-        }
+        await(dropData)
       }
+    }
 
-      "delete email job by id" in new Setup  {
-        running(app) {
-          val spyEmailQueue = spy(emailQueue)
+    "delete email job by id" in new Setup {
+      running(app) {
+        val spyEmailQueue = spy(emailQueue)
 
-          val result = await(spyEmailQueue.deleteJob(UUID.randomUUID().toString))
+        val result = await(spyEmailQueue.deleteJob(UUID.randomUUID().toString))
 
-          result mustBe true
+        result mustBe true
 
-          await(dropData)
-        }
+        await(dropData)
       }
+    }
 
     "send all email jobs with processing set to false" in {
 
@@ -96,16 +96,16 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       val oldestJob = SendEmailJob("id-1",
         EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
         processing = false,
-        LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHourVal1,tdVal0,tdVal0))
+        LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHourVal1, tdVal0, tdVal0))
 
       val latestJob = SendEmailJob("id-2",
         EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
         processing = false,
-        LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHourVal5,tdVal0,tdVal0))
+        LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHourVal5, tdVal0, tdVal0))
 
       running(app) {
         await(for {
-          _ <- emailQueue.collection.insertMany(Seq(latestJob,oldestJob)).toFuture()
+          _ <- emailQueue.collection.insertMany(Seq(latestJob, oldestJob)).toFuture()
           result1 <- emailQueue.nextJob
           result2 <- emailQueue.nextJob
           result3 <- emailQueue.nextJob
@@ -119,67 +119,65 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
     }
 
-      "reset the processing flag for emails which are older than maximum age" in new Setup  {
+    "reset the processing flag for emails which are older than maximum age" in new Setup {
 
-        val tdYear = 2021
-        val tdMonth = 4
-        val tdDayOfMonth = 7
-        val tdHour = 15
-        val tdVal0 = 0
-        val tdVal1 = 1
-        val tdVal28 = 28
-        val tdVal30 = 30
-        val tdVal31 = 31
-        val tdVal59 = 59
+      val tdYear = 2021
+      val tdMonth = 4
+      val tdDayOfMonth = 7
+      val tdHour = 15
+      val tdVal0 = 0
+      val tdVal1 = 1
+      val tdVal28 = 28
+      val tdVal30 = 30
+      val tdVal31 = 31
+      val tdVal59 = 59
 
-        when(mockDateTimeService.getLocalDateTime)
-          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal0,tdVal0,tdVal0))
-          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal1,tdVal0,tdVal0))
-          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal28,tdVal0,tdVal0))
-          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal30,tdVal0,tdVal0))
-          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal31,tdVal0,tdVal0))
-          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal59,tdVal0,tdVal0))
+      when(mockDateTimeService.getLocalDateTime)
+        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal0, tdVal0, tdVal0))
+        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal1, tdVal0, tdVal0))
+        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal28, tdVal0, tdVal0))
+        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal30, tdVal0, tdVal0))
+        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal31, tdVal0, tdVal0))
+        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal59, tdVal0, tdVal0))
 
-        val emailRequests = Seq(
-          EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
-          EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
-          EmailRequest(List.empty, "id_3", Map.empty, force = false, None, None),
-          EmailRequest(List.empty, "id_4", Map.empty, force = false, None, None),
-          EmailRequest(List.empty, "id_5", Map.empty, force = false, None, None)
-        )
-        running(app) {
-          await(Future.sequence(emailRequests.map((emailRequest: EmailRequest) => emailQueue.enqueueJob(emailRequest))))
-          emailRequests.map(_ => await(emailQueue.nextJob))
-          val emailQueueCollection = emailQueue.collection
-          val countAllTrue: Long = await(emailQueueCollection.countDocuments(
-                                    filter = Filters.equal("processing", true)).toFuture().map(s => s))
-          countAllTrue must be(emailRequests.size)
+      val emailRequests = Seq(
+        EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
+        EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
+        EmailRequest(List.empty, "id_3", Map.empty, force = false, None, None),
+        EmailRequest(List.empty, "id_4", Map.empty, force = false, None, None),
+        EmailRequest(List.empty, "id_5", Map.empty, force = false, None, None)
+      )
+      running(app) {
+        await(Future.sequence(emailRequests.map((emailRequest: EmailRequest) => emailQueue.enqueueJob(emailRequest))))
+        emailRequests.map(_ => await(emailQueue.nextJob))
+        val emailQueueCollection = emailQueue.collection
+        val countAllTrue: Long = await(emailQueueCollection.countDocuments(
+          filter = Filters.equal("processing", true)).toFuture().map(s => s))
+        countAllTrue must be(emailRequests.size)
 
-          await(emailQueue.resetProcessing)
+        await(emailQueue.resetProcessing)
 
-          val resetCount: Long = await(emailQueueCollection.countDocuments(
-            filter = Filters.equal("processing", false)).toFuture().map(s => s))
-          resetCount must be(3)
+        val resetCount: Long = await(emailQueueCollection.countDocuments(
+          filter = Filters.equal("processing", false)).toFuture().map(s => s))
+        resetCount must be(3)
 
-          await(dropData)
-        }
+        await(dropData)
       }
+    }
   }
 
-  trait Setup{
+  trait Setup {
     val mockAppConfig: AppConfig = mock(classOf[AppConfig])
     val mockDateTimeService: DateTimeService = mock(classOf[DateTimeService])
     val app: Application = new GuiceApplicationBuilder()
       .overrides(api.inject.bind[DateTimeService].toInstance(mockDateTimeService))
       .build()
-    val emailQueue:EmailQueue = app.injector.instanceOf[EmailQueue]
+    val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
     await(dropData)
 
-    def dropData:Future[Unit] = {
+    def dropData: Future[Unit] = {
       emailQueue.collection.drop().toFuture().map(_ => ())
     }
-
-
   }
 
 }
