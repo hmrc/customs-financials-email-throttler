@@ -37,11 +37,19 @@ class EmailJobHandlerSpec extends SpecBase {
 
   class MockedEmailJobHandlerScenario() {
 
+    val tdYear = 2019
+    val tdMonth = 10
+    val tdDayOfMonth = 8
+    val tdHour = 15
+    val tdMinute = 1
+    val tdSecond = 0
+    val tdNanoSecond = 0
+
     val sendEmailJob: SendEmailJob = SendEmailJob(
       UUID.randomUUID().toString,
       EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
       processing = true,
-      LocalDateTime.of(2019,10,8,15,1,0,0)
+      LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdMinute,tdSecond,tdNanoSecond)
     )
 
     val mockEmailQueue: EmailQueue = mock(classOf[EmailQueue])

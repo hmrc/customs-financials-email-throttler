@@ -106,13 +106,25 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
     }
 
       "reset the processing flag for emails which are older than maximum age" in new Setup  {
+
+        val tdYear = 2021
+        val tdMonth = 4
+        val tdDayOfMonth = 7
+        val tdHour = 15
+        val tdVal0 = 0
+        val tdVal1 = 1
+        val tdVal28 = 28
+        val tdVal30 = 30
+        val tdVal31 = 31
+        val tdVal59 = 59
+
         when(mockDateTimeService.getLocalDateTime)
-          .thenReturn(LocalDateTime.of(2021,4,7,15,0,0,0))
-          .thenReturn(LocalDateTime.of(2021,4,7,15,1,0,0))
-          .thenReturn(LocalDateTime.of(2021,4,7,15,28,0,0))
-          .thenReturn(LocalDateTime.of(2021,4,7,15,30,0,0))
-          .thenReturn(LocalDateTime.of(2021,4,7,15,31,0,0))
-          .thenReturn(LocalDateTime.of(2021,4,7,15,59,0,0))  // Maximum age
+          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal0,tdVal0,tdVal0))
+          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal1,tdVal0,tdVal0))
+          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal28,tdVal0,tdVal0))
+          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal30,tdVal0,tdVal0))
+          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal31,tdVal0,tdVal0))
+          .thenReturn(LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHour,tdVal59,tdVal0,tdVal0))
 
         val emailRequests = Seq(
           EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
@@ -152,6 +164,8 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
     def dropData:Future[Unit] = {
       emailQueue.collection.drop().toFuture().map(_ => ())
     }
+
+
   }
 
 }

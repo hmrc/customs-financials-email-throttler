@@ -11,9 +11,9 @@ val testDirectory = "test"
 
 organization := "uk.gov.hmrc"
 
-lazy val scalastyleSettings = Seq(scalastyleConfig := baseDirectory.value /
-  "scalastyle-config.xml", (scalastyleConfig in Test) := baseDirectory.value / testDirectory
-  / "test-scalastyle-config.xml")
+lazy val scalastyleSettings = Seq(
+  scalastyleConfig := baseDirectory.value / "scalastyle-config.xml",
+  (Test / scalastyleConfig) := baseDirectory.value / testDirectory / "test-scalastyle-config.xml")
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
@@ -45,8 +45,8 @@ lazy val microservice = Project(appName, file("."))
     scalaVersion                     := "2.13.8",
     targetJvm                        := "jvm-11",
     scalacOptions                    := Seq("-feature", "-deprecation"),
-    parallelExecution in Test := false,
-    fork in Test := false
+    Test / parallelExecution         := false,
+    Test / fork                      := false
   )
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(scalastyleSettings)
