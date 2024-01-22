@@ -78,6 +78,13 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       }
 
     "send all email jobs with processing set to false" in {
+
+      val tdYear = 2021
+      val tdMonth = 4
+      val tdDayOfMonth = 10
+      val tdHourVal1 = 1
+      val tdHourVal5 = 5
+      val tdVal0 = 0
       val mockScheduler = mock(classOf[Scheduler])
 
       val app: Application = new GuiceApplicationBuilder()
@@ -86,8 +93,15 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
       val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
 
-      val oldestJob = SendEmailJob("id-1", EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None), processing = false, LocalDateTime.of(2021,4,10,1,0,0))
-      val latestJob = SendEmailJob("id-2", EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None), processing = false, LocalDateTime.of(2021,4,10,5,0,0))
+      val oldestJob = SendEmailJob("id-1",
+        EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
+        processing = false,
+        LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHourVal1,tdVal0,tdVal0))
+
+      val latestJob = SendEmailJob("id-2",
+        EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
+        processing = false,
+        LocalDateTime.of(tdYear,tdMonth,tdDayOfMonth,tdHourVal5,tdVal0,tdVal0))
 
       running(app) {
         await(for {
@@ -155,10 +169,10 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
   trait Setup{
     val mockAppConfig: AppConfig = mock(classOf[AppConfig])
     val mockDateTimeService: DateTimeService = mock(classOf[DateTimeService])
-    val app = new GuiceApplicationBuilder()
+    val app: Application = new GuiceApplicationBuilder()
       .overrides(api.inject.bind[DateTimeService].toInstance(mockDateTimeService))
       .build()
-    val emailQueue = app.injector.instanceOf[EmailQueue]
+    val emailQueue:EmailQueue = app.injector.instanceOf[EmailQueue]
     await(dropData)
 
     def dropData:Future[Unit] = {

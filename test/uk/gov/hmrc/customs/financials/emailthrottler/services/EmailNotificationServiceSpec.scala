@@ -34,7 +34,7 @@ class EmailNotificationServiceSpec extends SpecBase {
   "sendEmail" should {
     "send the email request" in new EmailNotificationServiceScenario {
 
-      val request = EmailRequest(List(EmailAddress("toAddress")), "templateId")
+      val request: EmailRequest = EmailRequest(List(EmailAddress("toAddress")), "templateId")
 
       when[Future[HttpResponse]](mockHttpClient.POST(any(), is(request), any())(any(), any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(Status.ACCEPTED, "")))
@@ -43,7 +43,7 @@ class EmailNotificationServiceSpec extends SpecBase {
     }
 
     "fail to send the email request" in new EmailNotificationServiceScenario {
-      val request = EmailRequest(List(EmailAddress("incorrectEmailAddress")), "templateId")
+      val request: EmailRequest = EmailRequest(List(EmailAddress("incorrectEmailAddress")), "templateId")
 
       when[Future[HttpResponse]](mockHttpClient.POST(any(), any(), any())(any(), any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(Status.BAD_REQUEST, "")))
@@ -52,7 +52,7 @@ class EmailNotificationServiceSpec extends SpecBase {
     }
 
     "recover from exception" in new EmailNotificationServiceScenario {
-      val request = EmailRequest(List(EmailAddress("incorrectEmailAddress")), "templateId")
+      val request: EmailRequest = EmailRequest(List(EmailAddress("incorrectEmailAddress")), "templateId")
 
       when[Future[HttpResponse]](mockHttpClient.POST(any(), any(), any())(any(), any(), any(), any()))
         .thenReturn(Future.failed(new HttpException("Internal server error", Status.INTERNAL_SERVER_ERROR)))

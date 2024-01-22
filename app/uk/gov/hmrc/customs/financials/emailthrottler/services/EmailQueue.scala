@@ -76,7 +76,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     ).toFutureOption().map {
       case emailJob@Some(value) =>
         metricsReporter.reportSuccessfulMarkJobForProcessing()
-        logger.info(s"Successfully marked latest send email job for processing: ${value}")
+        logger.info(s"Successfully marked latest send email job for processing: $value")
         emailJob
       case None =>
         logger.debug(s"email queue is empty")

@@ -141,9 +141,19 @@ class MetricsReporterServiceSpec extends SpecBase {
   }
 
   trait Setup {
+
+    val tdYear = 2018
+    val tdMonth = 11
+    val tdDayOfMonth = 9
+    val tdHour = 17
+    val tdMinute = 15
+    val tdSecondVal30 = 30
+    val tdSecondVal35 = 35
+    val tdNanoSecond = 1
+
     val mockDateTimeService: DateTimeService = mock(classOf[DateTimeService])
-    val startTimestamp: LocalDateTime = LocalDateTime.of(2018, 11, 9, 17, 15, 30, 1)
-    val endTimestamp: LocalDateTime = LocalDateTime.of(2018, 11, 9, 17, 15, 35, 1)
+    val startTimestamp: LocalDateTime = LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdMinute, tdSecondVal30, tdNanoSecond)
+    val endTimestamp: LocalDateTime = LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdMinute, tdSecondVal35, tdNanoSecond)
     val elapsedTimeInMillis: Long = 5000L // endTimestamp - startTimestamp
     when(mockDateTimeService.getLocalDateTime)
       .thenReturn(startTimestamp)
