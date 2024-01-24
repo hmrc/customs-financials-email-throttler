@@ -21,7 +21,7 @@ import com.kenshoo.play.metrics.Metrics
 import play.api.http.Status
 import uk.gov.hmrc.http.{BadRequestException, NotFoundException, UpstreamErrorResponse}
 
-import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+import java.time.{LocalDateTime, ZoneOffset}
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -40,6 +40,7 @@ class MetricsReporterService @Inject()(val metrics: Metrics, dateTimeService: Da
         case Failure(exception: UpstreamErrorResponse) => exception.statusCode
         case Failure(_) => Status.INTERNAL_SERVER_ERROR
       }
+
       updateResponseTimeHistogram(resourceName, httpResponseCode, startTime, dateTimeService.getLocalDateTime)
     }
   }
@@ -48,7 +49,9 @@ class MetricsReporterService @Inject()(val metrics: Metrics, dateTimeService: Da
                                           startTimestamp: LocalDateTime, endTimestamp: LocalDateTime): Unit = {
     val RESPONSE_TIMES_METRIC = "responseTimes"
     val histogramName = s"$RESPONSE_TIMES_METRIC.$resourceName.$httpResponseCode"
-    val elapsedTimeInMillis = endTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli - startTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli
+    val elapsedTimeInMillis =
+      endTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli - startTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli
+
     metrics.defaultRegistry.histogram(histogramName).update(elapsedTimeInMillis)
   }
 

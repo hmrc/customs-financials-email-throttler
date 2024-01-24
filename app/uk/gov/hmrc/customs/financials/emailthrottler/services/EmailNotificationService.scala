@@ -34,6 +34,7 @@ class EmailNotificationService @Inject()(http: HttpClient, metricsReporter: Metr
 
   def sendEmail(request: EmailRequest): Future[Boolean] = {
     implicit val hc: HeaderCarrier = HeaderCarrier()
+
     metricsReporter.withResponseTimeLogging("email.post.send-email") {
       http.POST[EmailRequest, HttpResponse](appConfig.sendEmailUrl, request).collect {
         case response if response.status == Status.ACCEPTED =>

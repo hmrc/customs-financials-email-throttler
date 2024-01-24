@@ -38,6 +38,8 @@ case class EmailRequest(to: List[EmailAddress],
 }
 
 object EmailRequest {
-  implicit val emailAddressFormat: Format[EmailAddress] = implicitly[Format[String]].inmap(EmailAddress, unlift(EmailAddress.unapply))
+  implicit val emailAddressFormat: Format[EmailAddress] =
+    implicitly[Format[String]].inmap(EmailAddress, unlift(EmailAddress.unapply))
+
   implicit val emailRequestFormat: OFormat[EmailRequest] = Json.format[EmailRequest]
 }

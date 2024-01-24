@@ -21,7 +21,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
-class EmailJobHandler @Inject()(emailQueue: EmailQueue, emailNotificationService: EmailNotificationService)(implicit ec: ExecutionContext) {
+class EmailJobHandler @Inject()(emailQueue: EmailQueue,
+                                emailNotificationService: EmailNotificationService)(implicit ec: ExecutionContext) {
 
   def processJob(): Future[Unit] = {
     for {

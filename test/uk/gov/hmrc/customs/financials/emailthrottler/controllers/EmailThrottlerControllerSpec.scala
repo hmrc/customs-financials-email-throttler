@@ -71,6 +71,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
 
     val fakeRequest: FakeRequest[EmailRequest] = FakeRequest("POST", "/", FakeHeaders(), requestBody.as[EmailRequest])
     val mockEmailQueue: EmailQueue = mock(classOf[EmailQueue])
-    val controller: EmailThrottlerController = new EmailThrottlerController(mockEmailQueue, Helpers.stubControllerComponents())
+    val controller: EmailThrottlerController =
+      new EmailThrottlerController(mockEmailQueue, Helpers.stubControllerComponents())
   }
 }

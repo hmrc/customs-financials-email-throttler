@@ -99,11 +99,13 @@ class EmailJobHandlerSpec extends SpecBase {
         val appConfig = mock(classOf[AppConfig])
         val mockConfiguration = mock(classOf[Configuration])
         val mockApplicationLifeCycle = mock(classOf[ApplicationLifecycle])
-        when(mockConfiguration.get(ArgumentMatchers.eq("mongodb.uri"))(any)).thenReturn("mongodb://127.0.0.1:27017/test-customs-email-throttler")
+        when(mockConfiguration.get(ArgumentMatchers.eq("mongodb.uri"))(any))
+          .thenReturn("mongodb://127.0.0.1:27017/test-customs-email-throttler")
         when(mockConfiguration.get[FiniteDuration]("hmrc.mongo.init.timeout"))
           .thenReturn(5.seconds)
 
-        val reactiveMongoComponent: PlayMongoComponent = new PlayMongoComponent(mockConfiguration, lifecycle = mockApplicationLifeCycle)
+        val reactiveMongoComponent: PlayMongoComponent =
+          new PlayMongoComponent(mockConfiguration, lifecycle = mockApplicationLifeCycle)
 
         val metricsReporter = mock(classOf[MetricsReporterService])
         val mockDateTimeService = mock(classOf[DateTimeService])
@@ -126,7 +128,6 @@ class EmailJobHandlerSpec extends SpecBase {
 
         reactiveMongoComponent.client.close()
       }
-
 
     }
 
