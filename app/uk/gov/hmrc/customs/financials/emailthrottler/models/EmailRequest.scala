@@ -20,7 +20,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.{Format, Json, OFormat}
 
 case class EmailAddress(address: String) {
-  override def toString(): String = "*" * address.length
+  override def toString: String = "*" * address.length
 }
 
 case class EmailRequest(to: List[EmailAddress],
@@ -38,6 +38,8 @@ case class EmailRequest(to: List[EmailAddress],
 }
 
 object EmailRequest {
-  implicit val emailAddressFormat: Format[EmailAddress] = implicitly[Format[String]].inmap(EmailAddress, unlift(EmailAddress.unapply))
+  implicit val emailAddressFormat: Format[EmailAddress] =
+    implicitly[Format[String]].inmap(EmailAddress, unlift(EmailAddress.unapply))
+
   implicit val emailRequestFormat: OFormat[EmailRequest] = Json.format[EmailRequest]
 }

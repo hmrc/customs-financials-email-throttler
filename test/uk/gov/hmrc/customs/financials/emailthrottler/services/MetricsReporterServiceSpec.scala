@@ -34,32 +34,39 @@ class MetricsReporterServiceSpec extends SpecBase {
     "Email Queue metrics" should {
       "reportSuccessfulEnqueueJob" in new Setup {
         metricsReporterService.reportSuccessfulEnqueueJob()
-        verify(mockRegistry).counter(ArgumentMatchers.eq("email-queue.enqueue-send-email-job-in-mongo-successful"))
+        verify(mockRegistry)
+          .counter(ArgumentMatchers.eq("email-queue.enqueue-send-email-job-in-mongo-successful"))
         verify(mockCounter).inc()
       }
       "reportFailedEnqueueJob" in new Setup {
         metricsReporterService.reportFailedEnqueueJob()
-        verify(mockRegistry).counter(ArgumentMatchers.eq("email-queue.enqueue-send-email-job-in-mongo-failed"))
+        verify(mockRegistry)
+          .counter(ArgumentMatchers.eq("email-queue.enqueue-send-email-job-in-mongo-failed"))
         verify(mockCounter).inc()
       }
       "reportSuccessfulMarkJobForProcessing" in new Setup {
         metricsReporterService.reportSuccessfulMarkJobForProcessing()
-        verify(mockRegistry).counter(ArgumentMatchers.eq("email-queue.mark-oldest-send-email-job-for-processing-in-mongo-successful"))
+        verify(mockRegistry)
+          .counter(
+            ArgumentMatchers.eq("email-queue.mark-oldest-send-email-job-for-processing-in-mongo-successful"))
         verify(mockCounter).inc()
       }
       "reportFailedMarkJobForProcessing" in new Setup {
         metricsReporterService.reportFailedMarkJobForProcessing()
-        verify(mockRegistry).counter(ArgumentMatchers.eq("email-queue.mark-oldest-send-email-job-for-processing-in-mongo-failed"))
+        verify(mockRegistry)
+          .counter(ArgumentMatchers.eq("email-queue.mark-oldest-send-email-job-for-processing-in-mongo-failed"))
         verify(mockCounter).inc()
       }
       "reportSuccessfulRemoveCompletedJob" in new Setup {
         metricsReporterService.reportSuccessfullyRemoveCompletedJob()
-        verify(mockRegistry).counter(ArgumentMatchers.eq("email-queue.delete-completed-send-email-job-from-mongo-successful"))
+        verify(mockRegistry)
+          .counter(ArgumentMatchers.eq("email-queue.delete-completed-send-email-job-from-mongo-successful"))
         verify(mockCounter).inc()
       }
       "reportFailedRemoveCompletedJob" in new Setup {
         metricsReporterService.reportFailedToRemoveCompletedJob()
-        verify(mockRegistry).counter(ArgumentMatchers.eq("email-queue.delete-completed-send-email-job-from-mongo-failed"))
+        verify(mockRegistry)
+          .counter(ArgumentMatchers.eq("email-queue.delete-completed-send-email-job-from-mongo-failed"))
         verify(mockCounter).inc()
       }
     }
@@ -72,6 +79,7 @@ class MetricsReporterServiceSpec extends SpecBase {
             Future.successful("OK")
           }
         }
+
         verify(mockRegistry).histogram("responseTimes.foo.200")
         verify(mockHistogram).update(elapsedTimeInMillis)
       }
@@ -84,6 +92,7 @@ class MetricsReporterServiceSpec extends SpecBase {
             }
           }
         }
+
         verify(mockRegistry).histogram("responseTimes.bar.500")
         verify(mockHistogram).update(elapsedTimeInMillis)
       }
@@ -96,6 +105,7 @@ class MetricsReporterServiceSpec extends SpecBase {
             }
           }
         }
+
         verify(mockRegistry).histogram("responseTimes.bar.404")
         verify(mockHistogram).update(elapsedTimeInMillis)
       }
@@ -108,6 +118,7 @@ class MetricsReporterServiceSpec extends SpecBase {
             }
           }
         }
+
         verify(mockRegistry).histogram("responseTimes.bar.400")
         verify(mockHistogram).update(elapsedTimeInMillis)
       }
@@ -120,6 +131,7 @@ class MetricsReporterServiceSpec extends SpecBase {
             }
           }
         }
+
         verify(mockRegistry).histogram("responseTimes.bar.503")
         verify(mockHistogram).update(elapsedTimeInMillis)
       }
@@ -132,6 +144,7 @@ class MetricsReporterServiceSpec extends SpecBase {
             }
           }
         }
+
         verify(mockRegistry).histogram("responseTimes.bar.403")
         verify(mockHistogram).update(elapsedTimeInMillis)
       }
@@ -141,10 +154,24 @@ class MetricsReporterServiceSpec extends SpecBase {
   }
 
   trait Setup {
+
+    val tdYear = 2018
+    val tdMonth = 11
+    val tdDayOfMonth = 9
+    val tdHour = 17
+    val tdMinute = 15
+    val tdSecondVal30 = 30
+    val tdSecondVal35 = 35
+    val tdNanoSecond = 1
+
     val mockDateTimeService: DateTimeService = mock(classOf[DateTimeService])
-    val startTimestamp: LocalDateTime = LocalDateTime.of(2018, 11, 9, 17, 15, 30, 1)
-    val endTimestamp: LocalDateTime = LocalDateTime.of(2018, 11, 9, 17, 15, 35, 1)
-    val elapsedTimeInMillis: Long = 5000L // endTimestamp - startTimestamp
+    val startTimestamp: LocalDateTime =
+      LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdMinute, tdSecondVal30, tdNanoSecond)
+
+    val endTimestamp: LocalDateTime =
+      LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdMinute, tdSecondVal35, tdNanoSecond)
+    val elapsedTimeInMillis: Long = 5000L
+
     when(mockDateTimeService.getLocalDateTime)
       .thenReturn(startTimestamp)
       .thenReturn(endTimestamp)

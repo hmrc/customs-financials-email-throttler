@@ -32,11 +32,13 @@ class Scheduler @Inject()(appConfig: AppConfig,
 
   val log: LoggerLike = Logger(this.getClass)
 
-  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = 0 seconds, delay = 1 / appConfig.emailsPerInstancePerSecond second) {
+  actorSystem.scheduler
+    .scheduleWithFixedDelay(initialDelay = 0 seconds, delay = 1 / appConfig.emailsPerInstancePerSecond second) {
     () => emailJobHandler.processJob()
   }
 
-  actorSystem.scheduler.scheduleWithFixedDelay(initialDelay = 10 minutes, delay = appConfig.housekeepingHours hours) {
+  actorSystem.scheduler
+    .scheduleWithFixedDelay(initialDelay = 10 minutes, delay = appConfig.housekeepingHours hours) {
     () => emailJobHandler.houseKeeping()
   }
 }

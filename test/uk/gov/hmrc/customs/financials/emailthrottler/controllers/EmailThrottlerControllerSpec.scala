@@ -46,7 +46,6 @@ class EmailThrottlerControllerSpec extends SpecBase {
         ),
         templateId = "template_for_duty_deferment_email",
         parameters = Map("param1" -> "value1", "param2" -> "value2"),
-        force = false,
         enrolment = Some("HMRC-CUS-ORG~EORINumber~testEori"),
         eventUrl = Some("event.url.co.uk"),
         onSendUrl = Some("on.send.url.co.uk")
@@ -72,6 +71,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
 
     val fakeRequest: FakeRequest[EmailRequest] = FakeRequest("POST", "/", FakeHeaders(), requestBody.as[EmailRequest])
     val mockEmailQueue: EmailQueue = mock(classOf[EmailQueue])
-    val controller: EmailThrottlerController = new EmailThrottlerController(mockEmailQueue, Helpers.stubControllerComponents())
+    val controller: EmailThrottlerController =
+      new EmailThrottlerController(mockEmailQueue, Helpers.stubControllerComponents())
   }
 }

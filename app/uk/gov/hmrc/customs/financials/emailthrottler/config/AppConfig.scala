@@ -23,7 +23,6 @@ import javax.inject.{Inject, Singleton}
 @Singleton
 class AppConfig @Inject()(val config: Configuration, servicesConfig: ServicesConfig) {
   lazy val appName: String = servicesConfig.getString("appName")
-  lazy val graphiteHost: String = servicesConfig.getString("microservice.metrics.graphite.host")
   lazy val sendEmailUrl: String = servicesConfig.baseUrl("email") + "/hmrc/email"
   lazy val emailsPerInstancePerSecond: Double = config.get[Double]("emailsPerInstancePerSecond")
   lazy val emailMaxAgeMins: Int = config.get[Int]("emailMaxAgeMins")

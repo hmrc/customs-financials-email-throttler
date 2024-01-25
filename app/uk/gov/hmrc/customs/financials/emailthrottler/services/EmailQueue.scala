@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
-import com.mongodb.client.model.Indexes.{ascending, descending}
-import com.mongodb.client.model.{ReplaceOptions, Updates}
-import org.mongodb.scala.FindObservable
+import com.mongodb.client.model.Indexes.ascending
+import com.mongodb.client.model.Updates
 import org.mongodb.scala.model.Filters.equal
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, ReplaceOptions}
+import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions}
 import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailRequest, SendEmailJob}
@@ -58,6 +57,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     val id = UUID.randomUUID().toString
     val record = SendEmailJob(id, emailRequest, processing = false, timeStamp)
     val result: Future[Boolean] = collection.insertOne(record).toFuture().map(_.wasAcknowledged())
+
     result.onComplete {
       case Failure(error) =>
         metricsReporter.reportFailedEnqueueJob()
@@ -66,6 +66,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
         metricsReporter.reportSuccessfulEnqueueJob()
         logger.info(s"Successfully enqueued send email job:  $timeStamp : $emailRequest")
     }
+
     result
   }
 
@@ -76,7 +77,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     ).toFutureOption().map {
       case emailJob@Some(value) =>
         metricsReporter.reportSuccessfulMarkJobForProcessing()
-        logger.info(s"Successfully marked latest send email job for processing: ${value}")
+        logger.info(s"Successfully marked latest send email job for processing: $value")
         emailJob
       case None =>
         logger.debug(s"email queue is empty")
@@ -91,6 +92,7 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
 
   def deleteJob(id: String): Future[Boolean] = {
     val result = collection.deleteOne(equal("_id", id)).toFuture().map(_.wasAcknowledged())
+
     result.onComplete {
       case Success(_) =>
         metricsReporter.reportSuccessfullyRemoveCompletedJob()
@@ -99,12 +101,14 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
         metricsReporter.reportFailedToRemoveCompletedJob()
         logger.error(s"Could not delete completed send email job: $error")
     }
+
     result
   }
 
   def resetProcessing: Future[Unit] = {
     val maxAge = dateTimeService.getLocalDateTime.minusMinutes(appConfig.emailMaxAgeMins)
     val updates = Updates.set("processing", false)
+
     collection.updateMany(
       filter = Filters.and(
         Filters.equal("processing", true),
