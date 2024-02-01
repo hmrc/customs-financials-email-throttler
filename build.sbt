@@ -1,3 +1,4 @@
+import sbt.Keys.scalaVersion
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, scalaSettings, targetJvm}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
@@ -65,6 +66,7 @@ lazy val scoverageSettings = Seq(
   ScoverageKeys.coverageMinimumBranchTotal := 85,
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true
+
 )
 
 lazy val it = project
