@@ -17,7 +17,6 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import com.codahale.metrics.{Counter, Histogram, MetricRegistry}
-import com.kenshoo.play.metrics.Metrics
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.{mock, verify, when}
 import play.api.http.Status
@@ -34,45 +33,61 @@ class MetricsReporterServiceSpec extends SpecBase {
     "Email Queue metrics" should {
       "reportSuccessfulEnqueueJob" in new Setup {
         metricsReporterService.reportSuccessfulEnqueueJob()
-        verify(mockRegistry)
-          .counter(ArgumentMatchers.eq("email-queue.enqueue-send-email-job-in-mongo-successful"))
+
+        verify(mockRegistry).counter(ArgumentMatchers.eq(
+          "email-queue.enqueue-send-email-job-in-mongo-successful"))
+
         verify(mockCounter).inc()
       }
+
       "reportFailedEnqueueJob" in new Setup {
         metricsReporterService.reportFailedEnqueueJob()
-        verify(mockRegistry)
-          .counter(ArgumentMatchers.eq("email-queue.enqueue-send-email-job-in-mongo-failed"))
+
+        verify(mockRegistry).counter(ArgumentMatchers.eq(
+          "email-queue.enqueue-send-email-job-in-mongo-failed"))
+
         verify(mockCounter).inc()
       }
+
       "reportSuccessfulMarkJobForProcessing" in new Setup {
         metricsReporterService.reportSuccessfulMarkJobForProcessing()
-        verify(mockRegistry)
-          .counter(
-            ArgumentMatchers.eq("email-queue.mark-oldest-send-email-job-for-processing-in-mongo-successful"))
+
+        verify(mockRegistry).counter(ArgumentMatchers.eq(
+          "email-queue.mark-oldest-send-email-job-for-processing-in-mongo-successful"))
+
         verify(mockCounter).inc()
       }
+
+
       "reportFailedMarkJobForProcessing" in new Setup {
         metricsReporterService.reportFailedMarkJobForProcessing()
-        verify(mockRegistry)
-          .counter(ArgumentMatchers.eq("email-queue.mark-oldest-send-email-job-for-processing-in-mongo-failed"))
+
+        verify(mockRegistry).counter(ArgumentMatchers.eq(
+          "email-queue.mark-oldest-send-email-job-for-processing-in-mongo-failed"))
+
         verify(mockCounter).inc()
       }
+
       "reportSuccessfulRemoveCompletedJob" in new Setup {
         metricsReporterService.reportSuccessfullyRemoveCompletedJob()
-        verify(mockRegistry)
-          .counter(ArgumentMatchers.eq("email-queue.delete-completed-send-email-job-from-mongo-successful"))
+
+        verify(mockRegistry).counter(ArgumentMatchers.eq(
+          "email-queue.delete-completed-send-email-job-from-mongo-successful"))
+
         verify(mockCounter).inc()
       }
+
       "reportFailedRemoveCompletedJob" in new Setup {
         metricsReporterService.reportFailedToRemoveCompletedJob()
-        verify(mockRegistry)
-          .counter(ArgumentMatchers.eq("email-queue.delete-completed-send-email-job-from-mongo-failed"))
+
+        verify(mockRegistry).counter(ArgumentMatchers.eq(
+          "email-queue.delete-completed-send-email-job-from-mongo-failed"))
+
         verify(mockCounter).inc()
       }
     }
 
     "withResponseTimeLogging" should {
-
       "log successful call metrics" in new Setup {
         await {
           metricsReporterService.withResponseTimeLogging("foo") {
@@ -127,7 +142,8 @@ class MetricsReporterServiceSpec extends SpecBase {
         assertThrows[UpstreamErrorResponse] {
           await {
             metricsReporterService.withResponseTimeLogging("bar") {
-              Future.failed(UpstreamErrorResponse("failure", Status.SERVICE_UNAVAILABLE, Status.NOT_IMPLEMENTED))
+              Future.failed(UpstreamErrorResponse(
+                "failure", Status.SERVICE_UNAVAILABLE, Status.NOT_IMPLEMENTED))
             }
           }
         }
@@ -140,7 +156,8 @@ class MetricsReporterServiceSpec extends SpecBase {
         assertThrows[UpstreamErrorResponse] {
           await {
             metricsReporterService.withResponseTimeLogging("bar") {
-              Future.failed(UpstreamErrorResponse("failure", Status.FORBIDDEN, Status.NOT_IMPLEMENTED))
+              Future.failed(UpstreamErrorResponse(
+                "failure", Status.FORBIDDEN, Status.NOT_IMPLEMENTED))
             }
           }
         }
@@ -148,9 +165,7 @@ class MetricsReporterServiceSpec extends SpecBase {
         verify(mockRegistry).histogram("responseTimes.bar.403")
         verify(mockHistogram).update(elapsedTimeInMillis)
       }
-
     }
-
   }
 
   trait Setup {
@@ -184,9 +199,9 @@ class MetricsReporterServiceSpec extends SpecBase {
     when(mockRegistry.histogram(ArgumentMatchers.any())).thenReturn(mockHistogram)
     when(mockRegistry.counter(ArgumentMatchers.any())).thenReturn(mockCounter)
 
-    val mockMetrics: Metrics = mock(classOf[Metrics])
-    when(mockMetrics.defaultRegistry).thenReturn(mockRegistry)
+    //val mockMetrics: Metrics = mock(classOf[Metrics])
+    //when(mockMetrics.defaultRegistry).thenReturn(mockRegistry)
 
-    val metricsReporterService = new MetricsReporterService(mockMetrics, mockDateTimeService)
+    val metricsReporterService = new MetricsReporterService(mockRegistry, mockDateTimeService)
   }
 }

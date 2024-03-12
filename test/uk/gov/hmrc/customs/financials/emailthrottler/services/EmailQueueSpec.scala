@@ -16,16 +16,20 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
+import com.codahale.metrics.MetricRegistry
 import org.mockito.Mockito.{mock, spy, when}
 import org.mongodb.scala.model.Filters
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.matchers.should.Matchers._
 import play.api
 import play.api.Application
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.running
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailAddress, EmailRequest, SendEmailJob}
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 import java.time.LocalDateTime
 import java.util.UUID
@@ -116,7 +120,6 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
           result3.nonEmpty mustBe false
         })
       }
-
     }
 
     "reset the processing flag for emails which are older than maximum age" in new Setup {
@@ -169,9 +172,16 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
   trait Setup {
     val mockAppConfig: AppConfig = mock(classOf[AppConfig])
     val mockDateTimeService: DateTimeService = mock(classOf[DateTimeService])
+
     val app: Application = new GuiceApplicationBuilder()
+      .overrides(bind[Metrics].toInstance(new FakeMetrics))
       .overrides(api.inject.bind[DateTimeService].toInstance(mockDateTimeService))
       .build()
+
+    class FakeMetrics extends Metrics {
+      override val defaultRegistry: MetricRegistry = new MetricRegistry
+    }
+
     val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
     await(dropData)
 
@@ -179,5 +189,4 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       emailQueue.collection.drop().toFuture().map(_ => ())
     }
   }
-
 }

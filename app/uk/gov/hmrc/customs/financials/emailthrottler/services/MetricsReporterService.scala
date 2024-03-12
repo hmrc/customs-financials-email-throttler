@@ -17,7 +17,7 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import com.google.inject.Inject
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import play.api.http.Status
 import uk.gov.hmrc.http.{BadRequestException, NotFoundException, UpstreamErrorResponse}
 
@@ -27,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 @Singleton
-class MetricsReporterService @Inject()(val metrics: Metrics, dateTimeService: DateTimeService) {
+class MetricsReporterService @Inject()(val metrics: MetricRegistry, dateTimeService: DateTimeService) {
 
   def withResponseTimeLogging[T](resourceName: String)(future: Future[T])
                                 (implicit ec: ExecutionContext): Future[T] = {
@@ -52,39 +52,38 @@ class MetricsReporterService @Inject()(val metrics: Metrics, dateTimeService: Da
     val elapsedTimeInMillis =
       endTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli - startTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli
 
-    metrics.defaultRegistry.histogram(histogramName).update(elapsedTimeInMillis)
+    metrics.histogram(histogramName).update(elapsedTimeInMillis)
   }
 
   val EMAIL_QUEUE_METRIC = "email-queue"
 
   def reportSuccessfulEnqueueJob(): Unit = {
     val counterName = s"$EMAIL_QUEUE_METRIC.enqueue-send-email-job-in-mongo-successful"
-    metrics.defaultRegistry.counter(counterName).inc()
+    metrics.counter(counterName).inc()
   }
 
   def reportFailedEnqueueJob(): Unit = {
     val counterName = s"$EMAIL_QUEUE_METRIC.enqueue-send-email-job-in-mongo-failed"
-    metrics.defaultRegistry.counter(counterName).inc()
+    metrics.counter(counterName).inc()
   }
 
   def reportSuccessfulMarkJobForProcessing(): Unit = {
     val counterName = s"$EMAIL_QUEUE_METRIC.mark-oldest-send-email-job-for-processing-in-mongo-successful"
-    metrics.defaultRegistry.counter(counterName).inc()
+    metrics.counter(counterName).inc()
   }
 
   def reportFailedMarkJobForProcessing(): Unit = {
     val counterName = s"$EMAIL_QUEUE_METRIC.mark-oldest-send-email-job-for-processing-in-mongo-failed"
-    metrics.defaultRegistry.counter(counterName).inc()
+    metrics.counter(counterName).inc()
   }
 
   def reportSuccessfullyRemoveCompletedJob(): Unit = {
     val counterName = s"$EMAIL_QUEUE_METRIC.delete-completed-send-email-job-from-mongo-successful"
-    metrics.defaultRegistry.counter(counterName).inc()
+    metrics.counter(counterName).inc()
   }
 
   def reportFailedToRemoveCompletedJob(): Unit = {
     val counterName = s"$EMAIL_QUEUE_METRIC.delete-completed-send-email-job-from-mongo-failed"
-    metrics.defaultRegistry.counter(counterName).inc()
+    metrics.counter(counterName).inc()
   }
-
 }
