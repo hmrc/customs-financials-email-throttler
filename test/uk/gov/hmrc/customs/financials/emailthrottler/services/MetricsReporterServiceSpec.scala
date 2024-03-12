@@ -199,9 +199,6 @@ class MetricsReporterServiceSpec extends SpecBase {
     when(mockRegistry.histogram(ArgumentMatchers.any())).thenReturn(mockHistogram)
     when(mockRegistry.counter(ArgumentMatchers.any())).thenReturn(mockCounter)
 
-    //val mockMetrics: Metrics = mock(classOf[Metrics])
-    //when(mockMetrics.defaultRegistry).thenReturn(mockRegistry)
-
     val metricsReporterService = new MetricsReporterService(mockRegistry, mockDateTimeService)
   }
 }
