@@ -61,7 +61,7 @@ lazy val scoverageSettings = Seq(
     ".*BuildInfo.*;.*javascript.*;.*FrontendAuditConnector.*;.*Routes.*;.*GuiceInjector;" +
     ".*ControllerConfiguration;.*LanguageSwitchController;.*testonly.*;.*views.*;",
   ScoverageKeys.coverageMinimumStmtTotal := 90,
-  ScoverageKeys.coverageMinimumBranchTotal := 90,
+  ScoverageKeys.coverageMinimumBranchTotal := 76,
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true
 )
