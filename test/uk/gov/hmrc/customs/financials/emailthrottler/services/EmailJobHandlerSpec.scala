@@ -60,38 +60,28 @@ class EmailJobHandlerSpec extends SpecBase {
     when(mockEmailNotificationService.sendEmail(ArgumentMatchers.any())).thenReturn(Future.successful(true))
 
     val service = new EmailJobHandler(mockEmailQueue, mockEmailNotificationService)
-
   }
 
   "EmailJobHandlerSpec" should {
-
     "process job" should {
 
       "fetch job from email queue" in new MockedEmailJobHandlerScenario {
-
         await(service.processJob())
-
         verify(mockEmailQueue).nextJob
       }
 
       "ask email notification service to send email" in new MockedEmailJobHandlerScenario {
-
         await(service.processJob())
-
         verify(mockEmailNotificationService).sendEmail(ArgumentMatchers.any())
       }
 
       "ask email queue to delete completed job" in new MockedEmailJobHandlerScenario {
-
         await(service.processJob())
-
         verify(mockEmailQueue).deleteJob(ArgumentMatchers.any())
       }
 
       "housekeeping " in new MockedEmailJobHandlerScenario {
-
         service.houseKeeping()
-
         verify(mockEmailQueue).resetProcessing
       }
 
@@ -99,8 +89,10 @@ class EmailJobHandlerSpec extends SpecBase {
         val appConfig = mock(classOf[AppConfig])
         val mockConfiguration = mock(classOf[Configuration])
         val mockApplicationLifeCycle = mock(classOf[ApplicationLifecycle])
+
         when(mockConfiguration.get(ArgumentMatchers.eq("mongodb.uri"))(any))
           .thenReturn("mongodb://127.0.0.1:27017/test-customs-email-throttler")
+
         when(mockConfiguration.get[FiniteDuration]("hmrc.mongo.init.timeout"))
           .thenReturn(5.seconds)
 
@@ -112,11 +104,13 @@ class EmailJobHandlerSpec extends SpecBase {
         val emailQueue = new EmailQueue(reactiveMongoComponent, mockDateTimeService, appConfig, metricsReporter)
 
         when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
+
         val emailRequests = Seq(
           EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
           EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
           EmailRequest(List.empty, "id_3", Map.empty, force = false, None, None)
         )
+
         emailRequests.foreach(request => await(emailQueue.enqueueJob(request)))
 
         val mockEmailNotificationService = mock(classOf[EmailNotificationService])
@@ -128,8 +122,6 @@ class EmailJobHandlerSpec extends SpecBase {
 
         reactiveMongoComponent.client.close()
       }
-
     }
-
   }
 }
