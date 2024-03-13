@@ -14,6 +14,6 @@ object AppDependencies {
     "uk.gov.hmrc" %% "bootstrap-test-play-29" % bootstrapVersion % Test,
     "org.pegdown" % "pegdown" % "1.6.0" % "test",
     "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.1" % "test",
-    "org.mockito" % "mockito-core" % "3.1.0" % "test"
+    "org.mockito" % "mockito-core" % "5.10.0" % "test"
   )
 }

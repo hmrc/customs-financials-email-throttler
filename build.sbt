@@ -48,13 +48,11 @@ lazy val microservice = Project(appName, file("."))
       compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
       "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
     ),
-    scalaVersion := scala2_13_12,
     targetJvm := "jvm-11",
     scalacOptions := Seq("-feature", "-deprecation"),
     Test / parallelExecution := false,
     Test / fork := false
   )
-  .settings(addTestReportOption(IntegrationTest, "int-test-reports"))
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(scalastyleSettings)
 
@@ -62,8 +60,8 @@ lazy val scoverageSettings = Seq(
   ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*repositories.*;" +
     ".*BuildInfo.*;.*javascript.*;.*FrontendAuditConnector.*;.*Routes.*;.*GuiceInjector;" +
     ".*ControllerConfiguration;.*LanguageSwitchController;.*testonly.*;.*views.*;",
-  ScoverageKeys.coverageMinimumStmtTotal := 85,
-  ScoverageKeys.coverageMinimumBranchTotal := 85,
+  ScoverageKeys.coverageMinimumStmtTotal := 90,
+  ScoverageKeys.coverageMinimumBranchTotal := 90,
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true
 )

@@ -58,7 +58,6 @@ class MetricsReporterServiceSpec extends SpecBase {
         verify(mockCounter).inc()
       }
 
-
       "reportFailedMarkJobForProcessing" in new Setup {
         metricsReporterService.reportFailedMarkJobForProcessing()
 
