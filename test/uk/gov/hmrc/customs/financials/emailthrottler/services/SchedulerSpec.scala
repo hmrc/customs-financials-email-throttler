@@ -29,10 +29,13 @@ class SchedulerSpec extends SpecBase {
     "schedule email sending" in {
       val mockAppConfig = mock(classOf[AppConfig])
       when(mockAppConfig.emailsPerInstancePerSecond).thenReturn(0.2)
+
       val mockEmailJobHandler = mock(classOf[EmailJobHandler])
       val mockActorSystem = mock(classOf[ActorSystem])
       val mockScheduler = mock(classOf[akka.actor.Scheduler])
+
       when(mockActorSystem.scheduler).thenReturn(mockScheduler)
+
       new Scheduler(mockAppConfig, mockEmailJobHandler, mockActorSystem)
       verify(mockActorSystem, times(2)).scheduler
     }

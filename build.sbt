@@ -57,9 +57,8 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalastyleSettings)
 
 lazy val scoverageSettings = Seq(
-  ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*repositories.*;" +
-    ".*BuildInfo.*;.*javascript.*;.*Routes.*;.*GuiceInjector;" +
-    ".*ControllerConfiguration;.*testonly.*;",
+  ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*BuildInfo.*;.*javascript.*;.*Routes.*;" +
+    ".*GuiceInjector;.*testonly.*;.*EmailQueue;",
   ScoverageKeys.coverageMinimumStmtTotal := 90,
   ScoverageKeys.coverageMinimumBranchTotal := 90,
   ScoverageKeys.coverageFailOnMinimum := true,
