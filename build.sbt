@@ -1,5 +1,5 @@
 import scoverage.ScoverageKeys
-import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, scalaSettings, targetJvm}
+import uk.gov.hmrc.DefaultBuildSettings.{scalaSettings, targetJvm}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 
 val appName = "customs-financials-email-throttler"
@@ -57,11 +57,11 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalastyleSettings)
 
 lazy val scoverageSettings = Seq(
-  ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*repositories.*;" +
-    ".*BuildInfo.*;.*javascript.*;.*FrontendAuditConnector.*;.*Routes.*;.*GuiceInjector;" +
-    ".*ControllerConfiguration;.*LanguageSwitchController;.*testonly.*;.*views.*;",
+  ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*repositories.*;" +
+    ".*BuildInfo.*;.*javascript.*;.*Routes.*;.*GuiceInjector;" +
+    ".*ControllerConfiguration;.*testonly.*;",
   ScoverageKeys.coverageMinimumStmtTotal := 90,
-  ScoverageKeys.coverageMinimumBranchTotal := 76,
+  ScoverageKeys.coverageMinimumBranchTotal := 90,
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true
 )

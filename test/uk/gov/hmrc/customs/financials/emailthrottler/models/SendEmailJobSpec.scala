@@ -16,46 +16,49 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.models
 
-import org.mockito.Mockito.{mock, when}
 import play.api.libs.json._
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
+import uk.gov.hmrc.customs.financials.emailthrottler.utils.TestData.{
+  DAY_15, EMPTY_STRING, HOUR_10, MINUTES_10,
+  MONTH_3, SECONDS_10, YEAR_2024
+}
 
-import java.time.{Instant, LocalDateTime, ZoneOffset}
+import java.time.LocalDateTime
 
 class SendEmailJobSpec extends SpecBase {
 
-  "MongoJavatimeFormats" when {
-    "writes" in new Setup {
-      val res = mockMongoFormats.localDateTimeWrites
-      res mustBe testWrites
-    }
+  "Reads" should {
+    "generate correct output" in new Setup {
 
-    "reads" in new Setup {
-      val res = mockMongoFormats.localDateTimeReads
-      res mustBe testReads
+      import SendEmailJob.formatSendEmailJob
+
+      Json.fromJson(Json.parse(sendEmailJsValueString)) mustBe JsSuccess(sendEmailJob)
     }
   }
 
-  "SendEmailJob" when {
-    "mongoDateTime returns valid date" in new Setup {
-      val res = SendEmailJob.mongoDateTime
-      res mustBe testDateTime
+  "Writes" should {
+    "generate correct output" in new Setup {
+      Json.toJson(sendEmailJob) mustBe Json.parse(sendEmailJsValueString)
     }
   }
 
   trait Setup {
+    val id = "test_id"
+    val emailReq: EmailRequest = EmailRequest(List.empty, EMPTY_STRING, Map.empty, force = false, None, None)
+    val date: LocalDateTime = LocalDateTime.of(YEAR_2024, MONTH_3, DAY_15, HOUR_10, MINUTES_10, SECONDS_10)
 
-    final val testReads: Reads[LocalDateTime] = Reads.at[String](__ \ "$date" \ "$numberLong")
-      .map(dateTime => Instant.ofEpochMilli(dateTime.toLong).atZone(ZoneOffset.UTC).toLocalDateTime)
+    val sendEmailJob: SendEmailJob = SendEmailJob(id, emailReq, processing = true, date)
 
-    final val testWrites: Writes[LocalDateTime] = Writes.at[String](__ \ "$date" \ "$numberLong")
-      .contramap(_.toInstant(ZoneOffset.UTC).toEpochMilli.toString)
-
-    implicit val testDateTime: Format[LocalDateTime] = MongoJavatimeFormats.localDateTimeFormat
-
-    val mockMongoFormats: MongoJavatimeFormats = mock(classOf[MongoJavatimeFormats])
-
-    when(mockMongoFormats.localDateTimeReads).thenReturn(testReads)
-    when(mockMongoFormats.localDateTimeWrites).thenReturn(testWrites)
+    val sendEmailJsValueString: String =
+      """{"_id":"test_id",
+        |"emailRequest":{
+        |"to":[],
+        |"templateId":"",
+        |"parameters":{},
+        |"force":false},
+        |"processing":true,
+        |"lastUpdated":{"$date":{"$numberLong":"1710497410000"}
+        |}
+        |}""".stripMargin
   }
 }

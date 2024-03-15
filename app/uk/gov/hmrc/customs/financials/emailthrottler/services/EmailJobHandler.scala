@@ -19,7 +19,6 @@ package uk.gov.hmrc.customs.financials.emailthrottler.services
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
-
 @Singleton
 class EmailJobHandler @Inject()(emailQueue: EmailQueue,
                                 emailNotificationService: EmailNotificationService)(implicit ec: ExecutionContext) {
