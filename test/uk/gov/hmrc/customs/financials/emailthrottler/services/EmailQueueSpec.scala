@@ -27,6 +27,10 @@ import play.api.test.Helpers.running
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailAddress, EmailRequest, SendEmailJob}
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
+import uk.gov.hmrc.customs.financials.emailthrottler.utils.TestData.{
+  DAY_7, HOUR_1, HOUR_15, HOUR_5, MINUTES_0,
+  MINUTES_1, MINUTES_28, MINUTES_30, MINUTES_31, MINUTES_59, MONTH_10, MONTH_4, NANO_SECONDS_0, SECONDS_0, YEAR_2021
+}
 
 import java.time.LocalDateTime
 import java.util.UUID
@@ -38,6 +42,7 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
   "EmailAddress" should {
     "obfuscate toString" in {
       val emailAddress = EmailAddress("test@nowhere")
+
       assert(emailAddress.toString() == "************")
     }
   }
@@ -46,9 +51,11 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
     "insert email job into collection" in new Setup {
       running(app) {
         when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
+
         val emailRequest = EmailRequest(List.empty, "", Map.empty, force = false, None, None)
         val spyEmailQueue = spy(emailQueue)
         val result: Boolean = await(spyEmailQueue.enqueueJob(emailRequest))
+
         result mustBe true
 
         await(dropData)
@@ -79,13 +86,6 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
     }
 
     "send all email jobs with processing set to false" in {
-
-      val tdYear = 2021
-      val tdMonth = 4
-      val tdDayOfMonth = 10
-      val tdHourVal1 = 1
-      val tdHourVal5 = 5
-      val tdVal0 = 0
       val mockScheduler = mock(classOf[Scheduler])
 
       val app: Application = new GuiceApplicationBuilder()
@@ -97,12 +97,12 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       val oldestJob = SendEmailJob("id-1",
         EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
         processing = false,
-        LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHourVal1, tdVal0, tdVal0))
+        LocalDateTime.of(YEAR_2021, MONTH_4, MONTH_10, HOUR_1, MINUTES_0, SECONDS_0))
 
       val latestJob = SendEmailJob("id-2",
         EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
         processing = false,
-        LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHourVal5, tdVal0, tdVal0))
+        LocalDateTime.of(YEAR_2021, MONTH_4, MONTH_10, HOUR_5, MINUTES_0, SECONDS_0))
 
       running(app) {
         await(for {
@@ -121,44 +121,36 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
     "reset the processing flag for emails which are older than maximum age" in new Setup {
 
-      val tdYear = 2021
-      val tdMonth = 4
-      val tdDayOfMonth = 7
-      val tdHour = 15
-      val tdVal0 = 0
-      val tdVal1 = 1
-      val tdVal28 = 28
-      val tdVal30 = 30
-      val tdVal31 = 31
-      val tdVal59 = 59
-
       when(mockDateTimeService.getLocalDateTime)
-        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal0, tdVal0, tdVal0))
-        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal1, tdVal0, tdVal0))
-        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal28, tdVal0, tdVal0))
-        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal30, tdVal0, tdVal0))
-        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal31, tdVal0, tdVal0))
-        .thenReturn(LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdVal59, tdVal0, tdVal0))
+        .thenReturn(LocalDateTime.of(YEAR_2021, MONTH_4, DAY_7, HOUR_15, MINUTES_0, SECONDS_0, NANO_SECONDS_0))
+        .thenReturn(LocalDateTime.of(YEAR_2021, MONTH_4, DAY_7, HOUR_15, MINUTES_1, SECONDS_0, NANO_SECONDS_0))
+        .thenReturn(LocalDateTime.of(YEAR_2021, MONTH_4, DAY_7, HOUR_15, MINUTES_28, SECONDS_0, NANO_SECONDS_0))
+        .thenReturn(LocalDateTime.of(YEAR_2021, MONTH_4, DAY_7, HOUR_15, MINUTES_30, SECONDS_0, NANO_SECONDS_0))
+        .thenReturn(LocalDateTime.of(YEAR_2021, MONTH_4, DAY_7, HOUR_15, MINUTES_31, SECONDS_0, NANO_SECONDS_0))
+        .thenReturn(LocalDateTime.of(YEAR_2021, MONTH_4, DAY_7, HOUR_15, MINUTES_59, SECONDS_0, NANO_SECONDS_0))
 
-      val emailRequests = Seq(
+      val emailRequests: Seq[EmailRequest] = Seq(
         EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
         EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
         EmailRequest(List.empty, "id_3", Map.empty, force = false, None, None),
         EmailRequest(List.empty, "id_4", Map.empty, force = false, None, None),
-        EmailRequest(List.empty, "id_5", Map.empty, force = false, None, None)
-      )
+        EmailRequest(List.empty, "id_5", Map.empty, force = false, None, None))
+
       running(app) {
         await(Future.sequence(emailRequests.map((emailRequest: EmailRequest) => emailQueue.enqueueJob(emailRequest))))
         emailRequests.map(_ => await(emailQueue.nextJob))
+
         val emailQueueCollection = emailQueue.collection
         val countAllTrue: Long = await(emailQueueCollection.countDocuments(
           filter = Filters.equal("processing", true)).toFuture().map(s => s))
+
         countAllTrue must be(emailRequests.size)
 
         await(emailQueue.resetProcessing)
 
         val resetCount: Long = await(emailQueueCollection.countDocuments(
           filter = Filters.equal("processing", false)).toFuture().map(s => s))
+
         resetCount must be(3)
 
         await(dropData)
