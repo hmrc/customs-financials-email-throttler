@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
-import akka.actor.ActorSystem
-import org.mockito.Mockito.{times, verify, when, mock}
+import org.apache.pekko.actor.ActorSystem
+
+import org.mockito.Mockito.{mock, times, verify, when}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 
@@ -32,7 +33,7 @@ class SchedulerSpec extends SpecBase {
 
       val mockEmailJobHandler = mock(classOf[EmailJobHandler])
       val mockActorSystem = mock(classOf[ActorSystem])
-      val mockScheduler = mock(classOf[akka.actor.Scheduler])
+      val mockScheduler = mock(classOf[org.apache.pekko.actor.Scheduler])
 
       when(mockActorSystem.scheduler).thenReturn(mockScheduler)
 
