@@ -9,7 +9,7 @@ val testScalaStyleConfigFile = "test-scalastyle-config.xml"
 val testDirectory = "test"
 
 val scala2_13_12 = "2.13.12"
-val bootstrap = "8.5.0"
+val bootstrap = "8.6.0"
 val silencerVersion = "1.7.16"
 
 ThisBuild / majorVersion := 0
@@ -27,7 +27,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalaSettings *)
   .settings(scoverageSettings *)
   .settings(
-    majorVersion := 0,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     scalacOptions ++= Seq(
       "-P:silencer:pathFilters=routes",
@@ -68,4 +67,4 @@ lazy val scoverageSettings = Seq(
 lazy val it = project
   .enablePlugins(PlayScala)
   .dependsOn(microservice % "test->test")
-  .settings(libraryDependencies ++= Seq("uk.gov.hmrc" %% "bootstrap-test-play-29" % bootstrap % Test))
+  .settings(libraryDependencies ++= Seq("uk.gov.hmrc" %% "bootstrap-test-play-30" % bootstrap % Test))
