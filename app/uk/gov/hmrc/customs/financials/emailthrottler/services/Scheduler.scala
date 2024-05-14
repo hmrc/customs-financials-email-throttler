@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 
