@@ -28,3 +28,10 @@ To get a unit test coverage report, you can run `sbt clean coverage test coverag
 then open the resulting coverage report `target/scala-2.12/scoverage-report/index.html` in a web browser.
 
 The test coverage threshold is currently set at 85%. Any significant commits of code without corresponding tests may result in the build failing.
+
+## All tests and checks
+
+This is a sbt command alias specific to this project. It will run a scala style check, run unit tests, run integration
+tests and produce a coverage report:
+
+> `sbt runAllChecks`
