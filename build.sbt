@@ -22,7 +22,7 @@ lazy val scalastyleSettings = Seq(
   (Test / scalastyleConfig) := baseDirectory.value / testDirectory / "test-scalastyle-config.xml")
 
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
+  .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
   .settings(scalaSettings *)
   .settings(scoverageSettings *)
