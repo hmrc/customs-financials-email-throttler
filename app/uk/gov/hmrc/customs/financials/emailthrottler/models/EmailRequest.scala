@@ -44,15 +44,15 @@ case class EmailRequest(to: List[EmailAddress],
     EmailRequest(to, templateId, parameters, force, formattedEnrolment, eventUrl, onSendUrl)
   }
 
+}
+
+object EmailRequest {
+  implicit val emailAddressFormat: Format[EmailAddress] = Json.format[EmailAddress]
+  implicit val emailRequestFormat: OFormat[EmailRequest] = Json.format[EmailRequest]
+
+
   implicit def jsonBodyWritable[T](implicit
                                    writes: Writes[T],
                                    jsValueBodyWritable: BodyWritable[JsValue]
                                   ): BodyWritable[T] = jsValueBodyWritable.map(writes.writes)
-}
-
-object EmailRequest {
-  implicit val emailAddressFormat: Format[EmailAddress] =
-    implicitly[Format[String]].inmap(EmailAddress.apply, unlift(EmailAddress.unapply))
-
-  implicit val emailRequestFormat: OFormat[EmailRequest] = Json.format[EmailRequest]
 }
