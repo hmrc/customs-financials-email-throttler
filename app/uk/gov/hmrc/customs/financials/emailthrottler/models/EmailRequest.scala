@@ -17,7 +17,15 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.models
 
 import play.api.libs.functional.syntax._
+import play.api.libs.json.{Format, JsValue, Json, OFormat, Writes}
+import play.api.libs.ws.BodyWritable
 import play.api.libs.json.{Format, Json, OFormat}
+
+import uk.gov.hmrc.http.StringContextOps
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import play.api.libs.ws.BodyWritable
+import play.api.libs.ws.JsonBodyReadables._
+import play.api.libs.ws.JsonBodyWritables._
 
 case class EmailAddress(address: String) {
   override def toString: String = "*" * address.length
@@ -35,11 +43,16 @@ case class EmailRequest(to: List[EmailAddress],
     val formattedEnrolment = enrolment.map(e => s"HMRC-CUS-ORG~EORINumber~$e")
     EmailRequest(to, templateId, parameters, force, formattedEnrolment, eventUrl, onSendUrl)
   }
+
+  implicit def jsonBodyWritable[T](implicit
+                                   writes: Writes[T],
+                                   jsValueBodyWritable: BodyWritable[JsValue]
+                                  ): BodyWritable[T] = jsValueBodyWritable.map(writes.writes)
 }
 
 object EmailRequest {
   implicit val emailAddressFormat: Format[EmailAddress] =
-    implicitly[Format[String]].inmap(EmailAddress, unlift(EmailAddress.unapply))
+    implicitly[Format[String]].inmap(EmailAddress.apply, unlift(EmailAddress.unapply))
 
   implicit val emailRequestFormat: OFormat[EmailRequest] = Json.format[EmailRequest]
 }
