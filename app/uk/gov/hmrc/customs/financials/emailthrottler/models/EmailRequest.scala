@@ -49,8 +49,7 @@ case class EmailRequest(to: List[EmailAddress],
 object EmailRequest {
   implicit val emailAddressFormat: Format[EmailAddress] = Json.format[EmailAddress]
   implicit val emailRequestFormat: OFormat[EmailRequest] = Json.format[EmailRequest]
-
-
+  
   implicit def jsonBodyWritable[T](implicit
                                    writes: Writes[T],
                                    jsValueBodyWritable: BodyWritable[JsValue]

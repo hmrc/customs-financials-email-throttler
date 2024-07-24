@@ -23,7 +23,6 @@ import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.*
 import play.api.{Application, inject}
-import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.*
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
@@ -88,20 +87,15 @@ class EmailNotificationServiceSpec extends SpecBase {
     implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
-    implicit val mockAppConfig: AppConfig = mock(classOf[AppConfig])
     implicit val mockHttpClient: HttpClientV2 = mock(classOf[HttpClientV2])
     implicit val mockRequestBuilder: RequestBuilder = mock(classOf[RequestBuilder])
-    implicit val mockMetricsReporterService: MetricsReporterService = mock(classOf[MetricsReporterService])
-
-    val emailNotificationService = new EmailNotificationService(mockHttpClient, mockMetricsReporterService)
-
-    val url: URL = url"/some-url"
-    when(mockAppConfig.sendEmailUrl).thenReturn(url)
 
     val app: Application = new GuiceApplicationBuilder()
       .overrides(
         api.inject.bind[HttpClientV2].toInstance(mockHttpClient),
         api.inject.bind[RequestBuilder].toInstance(mockRequestBuilder))
       .build()
+
+    val emailNotificationService: EmailNotificationService = app.injector.instanceOf[EmailNotificationService]
   }
 }

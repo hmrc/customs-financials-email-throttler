@@ -17,6 +17,7 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.models
 
 import play.api.libs.json._
+import uk.gov.hmrc.customs.financials.emailthrottler.models.SendEmailJob.formatSendEmailJob
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.TestData.{
   DAY_15, EMPTY_STRING, HOUR_10, MINUTES_10,
@@ -29,9 +30,6 @@ class SendEmailJobSpec extends SpecBase {
 
   "Reads" should {
     "generate correct output" in new Setup {
-
-      import SendEmailJob.formatSendEmailJob
-
       Json.fromJson(Json.parse(sendEmailJsValueString)) mustBe JsSuccess(sendEmailJob)
     }
   }

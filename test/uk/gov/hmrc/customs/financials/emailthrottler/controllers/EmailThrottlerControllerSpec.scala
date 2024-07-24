@@ -57,7 +57,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
   trait Setup {
     val requestBody: JsValue = Json.parse(
       """{
-        | "to": ["email1@example.co.uk", "email1@example.co.uk"],
+        | "to":[{"address":"email1@example.co.uk"},{"address":"email1@example.co.uk"}],
         | "templateId": "template_for_duty_deferment_email",
         | "parameters": {
         |   "param1": "value1",
