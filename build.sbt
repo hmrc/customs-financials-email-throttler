@@ -9,7 +9,7 @@ val testScalaStyleConfigFile = "test-scalastyle-config.xml"
 val testDirectory = "test"
 
 val scala3_3_3 = "3.3.3"
-val bootstrap = "9.0.0"
+val bootstrapVersion = "9.1.0"
 val silencerVersion = "1.7.14"
 
 ThisBuild / majorVersion := 0
@@ -62,7 +62,7 @@ lazy val scoverageSettings = Seq(
 lazy val it = project
   .enablePlugins(PlayScala)
   .dependsOn(microservice % "test->test")
-  .settings(libraryDependencies ++= Seq("uk.gov.hmrc" %% "bootstrap-test-play-30" % bootstrap % Test))
+  .settings(libraryDependencies ++= Seq("uk.gov.hmrc" %% "bootstrap-test-play-30" % bootstrapVersion % Test))
 
 addCommandAlias("runAllChecks",
   ";clean;compile;coverage;test;it/test;scalastyle;Test/scalastyle;coverageReport")

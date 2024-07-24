@@ -16,76 +16,98 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
-import org.mockito.ArgumentMatchers.{eq => is, _}
 import org.mockito.Mockito.{mock, when}
 import org.mockito.invocation.InvocationOnMock
+import org.mockito.ArgumentMatchers.any
+import play.api
 import play.api.http.Status
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.JsString
+import play.api.test.Helpers.*
+import play.api.{Application, inject}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
-import uk.gov.hmrc.customs.financials.emailthrottler.models._
+import uk.gov.hmrc.customs.financials.emailthrottler.models.*
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
-import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
-import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
+import uk.gov.hmrc.http.*
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, ExecutionContext}
+import java.net.URL
+import scala.concurrent.{ExecutionContext, Future}
 
 class EmailNotificationServiceSpec extends SpecBase {
 
   "sendEmail" should {
-    "send the email request" in new EmailNotificationServiceScenario {
+    "send the email request" in new Setup {
 
-      val request: EmailRequest = EmailRequest(List(EmailAddress("toAddress")), "templateId")
+      running(app) {
+        val request: EmailRequest = EmailRequest(List(EmailAddress("toAddress")), "templateId")
 
-      when(mockRequestBuilder.withBody(any())(any(), any(), any())).thenReturn(mockRequestBuilder)
-      when(mockRequestBuilder.setHeader(any[(String, String)]())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any[EmailRequest]())(any(), any(), any())).thenReturn(mockRequestBuilder)
 
-      when(mockRequestBuilder.execute(any[HttpReads[HttpResponse]], any[ExecutionContext]))
-        .thenReturn(Future.successful(HttpResponse(Status.ACCEPTED, "")))
+        when(mockRequestBuilder.execute(any[HttpReads[HttpResponse]], any[ExecutionContext]))
+          .thenReturn(Future.successful(HttpResponse(Status.ACCEPTED, "")))
 
-      when(mockHttpClient.put(any)(any)).thenReturn(mockRequestBuilder)
+        when(mockHttpClient.post(any[URL]())(any())).thenReturn(mockRequestBuilder)
 
-      /*when(mockHttpClient.post(any())).thenReturn(Future.successful(HttpResponse(Status.ACCEPTED, "")))
-
-     when[Future[HttpResponse]](mockHttpClient.POST(any(), is(request), any())(any(), any(), any(), any()))
-       .thenReturn(Future.successful(HttpResponse(Status.ACCEPTED, "")))*/
-
-      await(emailNotificationService.sendEmail(request)) mustBe true
+        await(emailNotificationService.sendEmail(request)) mustBe true
+      }
     }
 
-   /* "fail to send the email request" in new EmailNotificationServiceScenario {
-      val request: EmailRequest = EmailRequest(List(EmailAddress("incorrectEmailAddress")), "templateId")
+    "fail to send the email request" in new Setup {
 
-      when[Future[HttpResponse]](mockHttpClient.POST(any(), any(), any())(any(), any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(Status.BAD_REQUEST, "")))
+      running(app) {
+        val request: EmailRequest = EmailRequest(List(EmailAddress("incorrectEmailAddress")), "templateId")
 
-      await(emailNotificationService.sendEmail(request)) mustBe false
+        when(mockRequestBuilder.withBody(any[EmailRequest]())(any(), any(), any())).thenReturn(mockRequestBuilder)
+
+        when(mockRequestBuilder.execute(any[HttpReads[HttpResponse]], any[ExecutionContext]))
+          .thenReturn(Future.successful(HttpResponse(Status.BAD_REQUEST, "")))
+
+        when(mockHttpClient.post(any[URL]())(any())).thenReturn(mockRequestBuilder)
+
+        await(emailNotificationService.sendEmail(request)) mustBe false
+      }
     }
 
-    "recover from exception" in new EmailNotificationServiceScenario {
-      val request: EmailRequest = EmailRequest(List(EmailAddress("incorrectEmailAddress")), "templateId")
+    "recover from exception" in new Setup {
+      running(app) {
+        val request: EmailRequest = EmailRequest(List(EmailAddress("incorrectEmailAddress")), "templateId")
 
-      when[Future[HttpResponse]](mockHttpClient.POST(any(), any(), any())(any(), any(), any(), any()))
-        .thenReturn(Future.failed(new HttpException("Internal server error", Status.INTERNAL_SERVER_ERROR)))
+        when(mockRequestBuilder.withBody(any[EmailRequest]())(any(), any(), any())).thenReturn(mockRequestBuilder)
 
-      await(emailNotificationService.sendEmail(request)) mustBe false
-    }*/
+        when(mockRequestBuilder.execute(any[HttpReads[HttpResponse]], any[ExecutionContext]))
+          .thenReturn(Future.failed(new HttpException("Internal server error", Status.INTERNAL_SERVER_ERROR)))
+
+        when(mockHttpClient.post(any[URL]())(any())).thenReturn(mockRequestBuilder)
+
+        await(emailNotificationService.sendEmail(request)) mustBe false
+      }
+    }
   }
 
-  trait EmailNotificationServiceScenario {
+  trait Setup {
+    implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+    implicit val hc: HeaderCarrier = HeaderCarrier()
+
     implicit val mockAppConfig: AppConfig = mock(classOf[AppConfig])
     implicit val mockHttpClient: HttpClientV2 = mock(classOf[HttpClientV2])
     implicit val mockRequestBuilder: RequestBuilder = mock(classOf[RequestBuilder])
+    implicit val mockMetricsReporterService: MetricsReporterService = mock(classOf[MetricsReporterService])
 
-    val mockMetricsReporterService: MetricsReporterService = mock(classOf[MetricsReporterService])
     when(mockMetricsReporterService.withResponseTimeLogging(any())(any())(any()))
       .thenAnswer((i: InvocationOnMock) => {
         i.getArgument[Future[JsString]](1)
       })
 
-    implicit val hc: HeaderCarrier = HeaderCarrier()
-
     val emailNotificationService = new EmailNotificationService(mockHttpClient, mockMetricsReporterService)
+
+    private val url = "/some-url"
+    when(mockAppConfig.sendEmailUrl).thenReturn(url)
+
+    val app: Application = new GuiceApplicationBuilder()
+      .overrides(
+        api.inject.bind[HttpClientV2].toInstance(mockHttpClient),
+        api.inject.bind[RequestBuilder].toInstance(mockRequestBuilder))
+      .build()
   }
 }
