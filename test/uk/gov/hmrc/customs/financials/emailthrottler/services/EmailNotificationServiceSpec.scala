@@ -17,12 +17,10 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import org.mockito.Mockito.{mock, when}
-import org.mockito.invocation.InvocationOnMock
 import org.mockito.ArgumentMatchers.any
 import play.api
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.JsString
 import play.api.test.Helpers.*
 import play.api.{Application, inject}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
@@ -38,11 +36,11 @@ class EmailNotificationServiceSpec extends SpecBase {
 
   "sendEmail" should {
     "send the email request" in new Setup {
-
       running(app) {
         val request: EmailRequest = EmailRequest(List(EmailAddress("toAddress")), "templateId")
 
-        when(mockRequestBuilder.withBody(any[EmailRequest]())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any[EmailRequest]())(any(), any(), any()))
+          .thenReturn(mockRequestBuilder)
 
         when(mockRequestBuilder.execute(any[HttpReads[HttpResponse]], any[ExecutionContext]))
           .thenReturn(Future.successful(HttpResponse(Status.ACCEPTED, "")))
@@ -54,11 +52,11 @@ class EmailNotificationServiceSpec extends SpecBase {
     }
 
     "fail to send the email request" in new Setup {
-
       running(app) {
         val request: EmailRequest = EmailRequest(List(EmailAddress("incorrectEmailAddress")), "templateId")
 
-        when(mockRequestBuilder.withBody(any[EmailRequest]())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any[EmailRequest]())(any(), any(), any()))
+          .thenReturn(mockRequestBuilder)
 
         when(mockRequestBuilder.execute(any[HttpReads[HttpResponse]], any[ExecutionContext]))
           .thenReturn(Future.successful(HttpResponse(Status.BAD_REQUEST, "")))
@@ -73,7 +71,8 @@ class EmailNotificationServiceSpec extends SpecBase {
       running(app) {
         val request: EmailRequest = EmailRequest(List(EmailAddress("incorrectEmailAddress")), "templateId")
 
-        when(mockRequestBuilder.withBody(any[EmailRequest]())(any(), any(), any())).thenReturn(mockRequestBuilder)
+        when(mockRequestBuilder.withBody(any[EmailRequest]())(any(), any(), any()))
+          .thenReturn(mockRequestBuilder)
 
         when(mockRequestBuilder.execute(any[HttpReads[HttpResponse]], any[ExecutionContext]))
           .thenReturn(Future.failed(new HttpException("Internal server error", Status.INTERNAL_SERVER_ERROR)))
@@ -94,14 +93,9 @@ class EmailNotificationServiceSpec extends SpecBase {
     implicit val mockRequestBuilder: RequestBuilder = mock(classOf[RequestBuilder])
     implicit val mockMetricsReporterService: MetricsReporterService = mock(classOf[MetricsReporterService])
 
-    when(mockMetricsReporterService.withResponseTimeLogging(any())(any())(any()))
-      .thenAnswer((i: InvocationOnMock) => {
-        i.getArgument[Future[JsString]](1)
-      })
-
     val emailNotificationService = new EmailNotificationService(mockHttpClient, mockMetricsReporterService)
 
-    private val url = "/some-url"
+    val url: URL = url"/some-url"
     when(mockAppConfig.sendEmailUrl).thenReturn(url)
 
     val app: Application = new GuiceApplicationBuilder()
