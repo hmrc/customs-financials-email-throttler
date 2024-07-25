@@ -22,7 +22,6 @@ import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.models.EmailRequest
 import uk.gov.hmrc.customs.financials.emailthrottler.services.EmailQueue
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import play.api.libs.json.Format.GenericFormat
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
