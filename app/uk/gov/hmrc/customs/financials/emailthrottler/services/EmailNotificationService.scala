@@ -21,7 +21,7 @@ import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.EmailRequest
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.HttpReads.Implicits
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
@@ -45,10 +45,12 @@ class EmailNotificationService @Inject()(http: HttpClientV2, metricsReporter: Me
           case response if response.status == Status.ACCEPTED => Future.successful(log.info(
             s"[SendEmail] Successful for ${request.to}"))
           Future.successful(true)
+
           case response => Future.successful(log.error(
             s"[SendEmail] Failed for ${
               request.to} with status - ${response.status} error - ${response.body}"))
             Future.successful(false)
+
         }.recover {
           case ex: Throwable => log.error(
             s"[SendEmail] Received an exception with message - ${ex.getMessage}")

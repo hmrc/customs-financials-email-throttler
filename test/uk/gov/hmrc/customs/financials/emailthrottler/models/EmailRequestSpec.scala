@@ -17,8 +17,8 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.models
 
 import play.api.libs.json.*
-import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import uk.gov.hmrc.customs.financials.emailthrottler.models.EmailRequest.emailRequestFormat
+import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 
 class EmailRequestSpec extends SpecBase {
 
@@ -42,7 +42,7 @@ class EmailRequestSpec extends SpecBase {
     )
 
     val id: String = "template_for_duty_deferment_email"
-    val params: Map[String, String] = Map ("param1" -> "value1", "param2" -> "value2")
+    val params: Map[String, String] = Map("param1" -> "value1", "param2" -> "value2")
     val enrolment: String = "testEori"
     val eventUrl: String = "event.url.co.uk"
     val onSendUrl: String = "on.send.url.co.uk"
@@ -52,16 +52,16 @@ class EmailRequestSpec extends SpecBase {
 
     val requestBody: String =
       s"""{
-        | "to":[{"address":"email1@example.co.uk"},{"address":"email1@example.co.uk"}],
-        | "templateId": "$id",
-        | "parameters": {
-        |   "param1": "value1",
-        |   "param2": "value2"
-        | },
-        | "force": false,
-        | "enrolment": "$enrolment",
-        | "eventUrl": "$eventUrl",
-        | "onSendUrl": "$onSendUrl"
-        |}""".stripMargin
+         | "to":[{"address":"email1@example.co.uk"},{"address":"email1@example.co.uk"}],
+         | "templateId": "$id",
+         | "parameters": {
+         |   "param1": "value1",
+         |   "param2": "value2"
+         | },
+         | "force": false,
+         | "enrolment": "$enrolment",
+         | "eventUrl": "$eventUrl",
+         | "onSendUrl": "$onSendUrl"
+         |}""".stripMargin
   }
 }
