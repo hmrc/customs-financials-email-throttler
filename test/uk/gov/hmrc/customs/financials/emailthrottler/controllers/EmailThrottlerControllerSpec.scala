@@ -57,7 +57,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
   trait Setup {
     val requestBody: JsValue = Json.parse(
       """{
-        | "to": ["email1@example.co.uk", "email1@example.co.uk"],
+        | "to":[{"address":"email1@example.co.uk"},{"address":"email1@example.co.uk"}],
         | "templateId": "template_for_duty_deferment_email",
         | "parameters": {
         |   "param1": "value1",
@@ -71,6 +71,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
 
     val fakeRequest: FakeRequest[EmailRequest] = FakeRequest("POST", "/", FakeHeaders(), requestBody.as[EmailRequest])
     val mockEmailQueue: EmailQueue = mock(classOf[EmailQueue])
+
     val controller: EmailThrottlerController =
       new EmailThrottlerController(mockEmailQueue, Helpers.stubControllerComponents())
   }

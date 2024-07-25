@@ -25,11 +25,11 @@ case class SendEmailJob(_id: String, emailRequest: EmailRequest, processing: Boo
 trait MongoJavatimeFormats {
   outer =>
 
-  final val localDateTimeReads: Reads[LocalDateTime] =
+  private final val localDateTimeReads: Reads[LocalDateTime] =
     Reads.at[String](__ \ "$date" \ "$numberLong")
       .map(dateTime => Instant.ofEpochMilli(dateTime.toLong).atZone(ZoneOffset.UTC).toLocalDateTime)
 
-  final val localDateTimeWrites: Writes[LocalDateTime] =
+  private val localDateTimeWrites: Writes[LocalDateTime] =
     Writes.at[String](__ \ "$date" \ "$numberLong")
       .contramap(_.toInstant(ZoneOffset.UTC).toEpochMilli.toString)
 

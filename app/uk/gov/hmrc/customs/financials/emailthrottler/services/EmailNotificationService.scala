@@ -20,14 +20,16 @@ import play.api.http.Status
 import play.api.{Logger, LoggerLike}
 import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.EmailRequest
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.HttpReads.Implicits.*
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class EmailNotificationService @Inject()(http: HttpClient, metricsReporter: MetricsReporterService)
+class EmailNotificationService @Inject()(http: HttpClientV2, metricsReporter: MetricsReporterService)
                                         (implicit appConfig: AppConfig, ec: ExecutionContext) {
 
   val log: LoggerLike = Logger(this.getClass)
@@ -36,18 +38,24 @@ class EmailNotificationService @Inject()(http: HttpClient, metricsReporter: Metr
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
     metricsReporter.withResponseTimeLogging("email.post.send-email") {
-      http.POST[EmailRequest, HttpResponse](appConfig.sendEmailUrl, request).collect {
-        case response if response.status == Status.ACCEPTED =>
-          log.info(s"[SendEmail] Successful for ${request.to}")
-          true
-        case response =>
-          log.error(s"[SendEmail] Failed for ${request.to} with status - ${response.status} error - ${response.body}")
+      http.post(url"${appConfig.sendEmailUrl}")
+        .withBody[EmailRequest](request)
+        .execute[HttpResponse]
+        .flatMap {
+          case response if response.status == Status.ACCEPTED => Future.successful(log.info(
+            s"[SendEmail] Successful for ${request.to}"))
+          Future.successful(true)
+
+          case response => Future.successful(log.error(
+            s"[SendEmail] Failed for ${
+              request.to} with status - ${response.status} error - ${response.body}"))
+            Future.successful(false)
+
+        }.recover {
+          case ex: Throwable => log.error(
+            s"[SendEmail] Received an exception with message - ${ex.getMessage}")
           false
-      }.recover {
-        case ex: Throwable =>
-          log.error(s"[SendEmail] Received an exception with message - ${ex.getMessage}")
-          false
-      }
+        }
     }
   }
 }
