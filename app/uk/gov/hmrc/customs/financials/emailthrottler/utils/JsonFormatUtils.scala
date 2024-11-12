@@ -19,6 +19,7 @@ package uk.gov.hmrc.customs.financials.emailthrottler.utils
 import play.api.libs.json.*
 
 object JsonFormatUtils {
+
   def stringFormat[A](fromString: String => A)(makeString: A => String): Format[A] = new Format[A] {
 
     def reads(json: JsValue): JsResult[A] = json match {

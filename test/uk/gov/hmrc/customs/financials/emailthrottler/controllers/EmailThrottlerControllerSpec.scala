@@ -51,7 +51,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
       val expectedResult: EmailRequest = EmailRequest(
         List(
           EmailAddress("email1@example.co.uk"),
-          EmailAddress("email1@example.co.uk")
+          EmailAddress("email2@example.co.uk")
         ),
         templateId = "template_for_duty_deferment_email",
         parameters = Map("param1" -> "value1", "param2" -> "value2"),
@@ -72,7 +72,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
       val expectedResult: EmailRequest = EmailRequest(
         List(
           EmailAddress("email1@example.co.uk"),
-          EmailAddress("email1@example.co.uk")
+          EmailAddress("email2@example.co.uk")
         ),
         templateId = "template_for_duty_deferment_email",
         parameters = Map("param1" -> "value1", "param2" -> "value2"),
@@ -91,7 +91,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
       """{
         |  "to": [
         |    "email1@example.co.uk",
-        |    "email1@example.co.uk"
+        |    "email2@example.co.uk"
         |  ],
         |  "templateId": "template_for_duty_deferment_email",
         |  "parameters": {
@@ -108,7 +108,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
       """{
         |  "to": [
         |    "email1@example.co.uk",
-        |    "email1@example.co.uk"
+        |    "email2@example.co.uk"
         |  ],
         |  "templateId": "template_for_duty_deferment_email",
         |  "parameters": {
