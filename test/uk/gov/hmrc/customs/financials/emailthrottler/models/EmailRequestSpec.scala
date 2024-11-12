@@ -52,16 +52,19 @@ class EmailRequestSpec extends SpecBase {
 
     val requestBody: String =
       s"""{
-         | "to":[{"address":"email1@example.co.uk"},{"address":"email1@example.co.uk"}],
-         | "templateId": "$id",
-         | "parameters": {
-         |   "param1": "value1",
-         |   "param2": "value2"
-         | },
-         | "force": false,
-         | "enrolment": "$enrolment",
-         | "eventUrl": "$eventUrl",
-         | "onSendUrl": "$onSendUrl"
+         |  "to": [
+         |    "email1@example.co.uk",
+         |    "email1@example.co.uk"
+         |  ],
+         |  "templateId": "$id",
+         |  "parameters": {
+         |    "param1": "value1",
+         |    "param2": "value2"
+         |  },
+         |  "force": false,
+         |  "enrolment": "$enrolment",
+         |  "eventUrl": "$eventUrl",
+         |  "onSendUrl": "$onSendUrl"
          |}""".stripMargin
   }
 }
