@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.controllers
 
-import org.mockito.Mockito.{mock,verify}
+import org.mockito.Mockito.{mock, verify}
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Result
@@ -32,17 +32,26 @@ import scala.concurrent.Future
 class EmailThrottlerControllerSpec extends SpecBase {
 
   "the controller" should {
+
     "handle enqueue request" in new Setup {
+
+      val fakeRequest: FakeRequest[EmailRequest] = FakeRequest(
+        "POST", "/", FakeHeaders(), requestBody01.as[EmailRequest])
+
       val result: Future[Result] = controller.enqueueEmail()(fakeRequest)
+
       status(result) mustBe Status.ACCEPTED
     }
 
-    "ask EmailQueue service to store emails" in new Setup {
-      await(controller.enqueueEmail()(fakeRequest))
+    "accept and store EmailRequest payload with eventUrl and onSendUrl" in new Setup {
+
+      val fakeRequest: FakeRequest[EmailRequest] = FakeRequest(
+        "POST", "/", FakeHeaders(), requestBody01.as[EmailRequest])
+
       val expectedResult: EmailRequest = EmailRequest(
         List(
           EmailAddress("email1@example.co.uk"),
-          EmailAddress("email1@example.co.uk")
+          EmailAddress("email2@example.co.uk")
         ),
         templateId = "template_for_duty_deferment_email",
         parameters = Map("param1" -> "value1", "param2" -> "value2"),
@@ -50,26 +59,66 @@ class EmailThrottlerControllerSpec extends SpecBase {
         eventUrl = Some("event.url.co.uk"),
         onSendUrl = Some("on.send.url.co.uk")
       )
+
+      await(controller.enqueueEmail()(fakeRequest))
       verify(mockEmailQueue).enqueueJob(expectedResult)
     }
+
+    "accept and store EmailRequest payload without eventUrl and onSendUrl" in new Setup {
+
+      val fakeRequest: FakeRequest[EmailRequest] = FakeRequest(
+        "POST", "/", FakeHeaders(), requestBody02.as[EmailRequest])
+
+      val expectedResult: EmailRequest = EmailRequest(
+        List(
+          EmailAddress("email1@example.co.uk"),
+          EmailAddress("email2@example.co.uk")
+        ),
+        templateId = "template_for_duty_deferment_email",
+        parameters = Map("param1" -> "value1", "param2" -> "value2"),
+        enrolment = Some("HMRC-CUS-ORG~EORINumber~testEori")
+      )
+
+      await(controller.enqueueEmail()(fakeRequest))
+      verify(mockEmailQueue).enqueueJob(expectedResult)
+    }
+
   }
 
   trait Setup {
-    val requestBody: JsValue = Json.parse(
+
+    val requestBody01: JsValue = Json.parse(
       """{
-        | "to":[{"address":"email1@example.co.uk"},{"address":"email1@example.co.uk"}],
-        | "templateId": "template_for_duty_deferment_email",
-        | "parameters": {
-        |   "param1": "value1",
-        |   "param2": "value2"
-        | },
-        | "force": false,
-        | "enrolment": "testEori",
-        | "eventUrl": "event.url.co.uk",
-        | "onSendUrl": "on.send.url.co.uk"
+        |  "to": [
+        |    "email1@example.co.uk",
+        |    "email2@example.co.uk"
+        |  ],
+        |  "templateId": "template_for_duty_deferment_email",
+        |  "parameters": {
+        |    "param1": "value1",
+        |    "param2": "value2"
+        |  },
+        |  "force": false,
+        |  "enrolment": "testEori",
+        |  "eventUrl": "event.url.co.uk",
+        |  "onSendUrl": "on.send.url.co.uk"
         |}""".stripMargin)
 
-    val fakeRequest: FakeRequest[EmailRequest] = FakeRequest("POST", "/", FakeHeaders(), requestBody.as[EmailRequest])
+    val requestBody02: JsValue = Json.parse(
+      """{
+        |  "to": [
+        |    "email1@example.co.uk",
+        |    "email2@example.co.uk"
+        |  ],
+        |  "templateId": "template_for_duty_deferment_email",
+        |  "parameters": {
+        |    "param1": "value1",
+        |    "param2": "value2"
+        |  },
+        |  "force": false,
+        |  "enrolment": "testEori"
+        |}""".stripMargin)
+
     val mockEmailQueue: EmailQueue = mock(classOf[EmailQueue])
 
     val controller: EmailThrottlerController =

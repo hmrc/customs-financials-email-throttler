@@ -38,7 +38,7 @@ class EmailRequestSpec extends SpecBase {
 
     val emails: List[EmailAddress] = List(
       EmailAddress("email1@example.co.uk"),
-      EmailAddress("email1@example.co.uk")
+      EmailAddress("email2@example.co.uk")
     )
 
     val id: String = "template_for_duty_deferment_email"
@@ -52,16 +52,19 @@ class EmailRequestSpec extends SpecBase {
 
     val requestBody: String =
       s"""{
-         | "to":[{"address":"email1@example.co.uk"},{"address":"email1@example.co.uk"}],
-         | "templateId": "$id",
-         | "parameters": {
-         |   "param1": "value1",
-         |   "param2": "value2"
-         | },
-         | "force": false,
-         | "enrolment": "$enrolment",
-         | "eventUrl": "$eventUrl",
-         | "onSendUrl": "$onSendUrl"
+         |  "to": [
+         |    "email1@example.co.uk",
+         |    "email2@example.co.uk"
+         |  ],
+         |  "templateId": "$id",
+         |  "parameters": {
+         |    "param1": "value1",
+         |    "param2": "value2"
+         |  },
+         |  "force": false,
+         |  "enrolment": "$enrolment",
+         |  "eventUrl": "$eventUrl",
+         |  "onSendUrl": "$onSendUrl"
          |}""".stripMargin
   }
 }
