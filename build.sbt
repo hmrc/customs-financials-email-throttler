@@ -1,5 +1,5 @@
 import scoverage.ScoverageKeys
-import uk.gov.hmrc.DefaultBuildSettings.{scalaSettings, targetJvm}
+import uk.gov.hmrc.DefaultBuildSettings.scalaSettings
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 
 val appName = "customs-financials-email-throttler"
@@ -42,7 +42,6 @@ lazy val microservice = Project(appName, file("."))
       "com.github.ghik" % "silencer-lib" % silencerVersion % Provided
         cross CrossVersion.for3Use2_13With("", ".12")
     ),
-    targetJvm := "jvm-11",
     scalacOptions := Seq("-feature", "-deprecation"),
     Test / parallelExecution := false,
     Test / fork := false
