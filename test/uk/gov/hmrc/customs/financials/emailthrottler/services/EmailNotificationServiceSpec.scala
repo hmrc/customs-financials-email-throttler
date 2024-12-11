@@ -85,15 +85,16 @@ class EmailNotificationServiceSpec extends SpecBase {
 
   trait Setup {
     implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
-    implicit val hc: HeaderCarrier = HeaderCarrier()
+    implicit val hc: HeaderCarrier                     = HeaderCarrier()
 
-    implicit val mockHttpClient: HttpClientV2 = mock(classOf[HttpClientV2])
+    implicit val mockHttpClient: HttpClientV2       = mock(classOf[HttpClientV2])
     implicit val mockRequestBuilder: RequestBuilder = mock(classOf[RequestBuilder])
 
     val app: Application = new GuiceApplicationBuilder()
       .overrides(
         api.inject.bind[HttpClientV2].toInstance(mockHttpClient),
-        api.inject.bind[RequestBuilder].toInstance(mockRequestBuilder))
+        api.inject.bind[RequestBuilder].toInstance(mockRequestBuilder)
+      )
       .build()
 
     val emailNotificationService: EmailNotificationService = app.injector.instanceOf[EmailNotificationService]

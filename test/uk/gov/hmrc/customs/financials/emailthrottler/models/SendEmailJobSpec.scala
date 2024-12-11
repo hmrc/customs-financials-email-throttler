@@ -20,8 +20,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.customs.financials.emailthrottler.models.SendEmailJob.formatSendEmailJob
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.TestData.{
-  DAY_15, EMPTY_STRING, HOUR_10, MINUTES_10,
-  MONTH_3, SECONDS_10, YEAR_2024
+  DAY_15, EMPTY_STRING, HOUR_10, MINUTES_10, MONTH_3, SECONDS_10, YEAR_2024
 }
 
 import java.time.LocalDateTime
@@ -41,9 +40,9 @@ class SendEmailJobSpec extends SpecBase {
   }
 
   trait Setup {
-    val id = "test_id"
+    val id                     = "test_id"
     val emailReq: EmailRequest = EmailRequest(List.empty, EMPTY_STRING, Map.empty, force = false, None, None)
-    val date: LocalDateTime = LocalDateTime.of(YEAR_2024, MONTH_3, DAY_15, HOUR_10, MINUTES_10, SECONDS_10)
+    val date: LocalDateTime    = LocalDateTime.of(YEAR_2024, MONTH_3, DAY_15, HOUR_10, MINUTES_10, SECONDS_10)
 
     val sendEmailJob: SendEmailJob = SendEmailJob(id, emailReq, processing = true, date)
 

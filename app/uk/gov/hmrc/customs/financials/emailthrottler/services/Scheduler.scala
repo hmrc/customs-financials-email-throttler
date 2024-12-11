@@ -26,19 +26,19 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 @Singleton
-class Scheduler @Inject()(appConfig: AppConfig,
-                          emailJobHandler: EmailJobHandler,
-                          actorSystem: ActorSystem)(implicit executionContext: ExecutionContext) {
+class Scheduler @Inject() (appConfig: AppConfig, emailJobHandler: EmailJobHandler, actorSystem: ActorSystem)(implicit
+  executionContext: ExecutionContext
+) {
 
   val log: LoggerLike = Logger(this.getClass)
 
   actorSystem.scheduler
-    .scheduleWithFixedDelay(initialDelay = 0 seconds, delay = 1 / appConfig.emailsPerInstancePerSecond second) {
-    () => emailJobHandler.processJob()
-  }
+    .scheduleWithFixedDelay(initialDelay = 0 seconds, delay = 1 / appConfig.emailsPerInstancePerSecond second) { () =>
+      emailJobHandler.processJob()
+    }
 
   actorSystem.scheduler
-    .scheduleWithFixedDelay(initialDelay = 10 minutes, delay = appConfig.housekeepingHours hours) {
-    () => emailJobHandler.houseKeeping()
-  }
+    .scheduleWithFixedDelay(initialDelay = 10 minutes, delay = appConfig.housekeepingHours hours) { () =>
+      emailJobHandler.houseKeeping()
+    }
 }

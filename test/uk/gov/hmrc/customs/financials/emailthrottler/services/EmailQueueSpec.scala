@@ -30,9 +30,8 @@ import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import org.mongodb.scala.SingleObservableFuture
 
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.TestData.{
-  DAY_7, HOUR_1, HOUR_15, HOUR_5, MINUTES_0,
-  MINUTES_1, MINUTES_28, MINUTES_30, MINUTES_31,
-  MINUTES_59, MONTH_10, MONTH_4, NANO_SECONDS_0, SECONDS_0, YEAR_2021
+  DAY_7, HOUR_1, HOUR_15, HOUR_5, MINUTES_0, MINUTES_1, MINUTES_28, MINUTES_30, MINUTES_31, MINUTES_59, MONTH_10,
+  MONTH_4, NANO_SECONDS_0, SECONDS_0, YEAR_2021
 }
 
 import java.time.LocalDateTime
@@ -55,8 +54,8 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       running(app) {
         when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
 
-        val emailRequest = EmailRequest(List.empty, "", Map.empty, force = false, None, None)
-        val spyEmailQueue = spy(emailQueue)
+        val emailRequest    = EmailRequest(List.empty, "", Map.empty, force = false, None, None)
+        val spyEmailQueue   = spy(emailQueue)
         val result: Boolean = await(spyEmailQueue.enqueueJob(emailRequest))
 
         result mustBe true
@@ -68,7 +67,7 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
     "insert multiple email job with same time stamp into collection" in new Setup {
       running(app) {
         when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
-        val emailRequest = EmailRequest(List.empty, "", Map.empty, force = false, None, None)
+        val emailRequest    = EmailRequest(List.empty, "", Map.empty, force = false, None, None)
         val eventualResults = (1 to 10).map(_ => emailQueue.enqueueJob(emailRequest))
         await(Future.sequence(eventualResults))
 
@@ -97,23 +96,27 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
       val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
 
-      val oldestJob = SendEmailJob("id-1",
+      val oldestJob = SendEmailJob(
+        "id-1",
         EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
         processing = false,
-        LocalDateTime.of(YEAR_2021, MONTH_4, MONTH_10, HOUR_1, MINUTES_0, SECONDS_0))
+        LocalDateTime.of(YEAR_2021, MONTH_4, MONTH_10, HOUR_1, MINUTES_0, SECONDS_0)
+      )
 
-      val latestJob = SendEmailJob("id-2",
+      val latestJob = SendEmailJob(
+        "id-2",
         EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
         processing = false,
-        LocalDateTime.of(YEAR_2021, MONTH_4, MONTH_10, HOUR_5, MINUTES_0, SECONDS_0))
+        LocalDateTime.of(YEAR_2021, MONTH_4, MONTH_10, HOUR_5, MINUTES_0, SECONDS_0)
+      )
 
       running(app) {
         await(for {
-          _ <- emailQueue.collection.insertMany(Seq(latestJob, oldestJob)).toFuture()
+          _       <- emailQueue.collection.insertMany(Seq(latestJob, oldestJob)).toFuture()
           result1 <- emailQueue.nextJob
           result2 <- emailQueue.nextJob
           result3 <- emailQueue.nextJob
-          _ <- emailQueue.collection.drop().toFuture()
+          _       <- emailQueue.collection.drop().toFuture()
         } yield {
           result1.nonEmpty mustBe true
           result2.nonEmpty mustBe true
@@ -137,22 +140,23 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
         EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
         EmailRequest(List.empty, "id_3", Map.empty, force = false, None, None),
         EmailRequest(List.empty, "id_4", Map.empty, force = false, None, None),
-        EmailRequest(List.empty, "id_5", Map.empty, force = false, None, None))
+        EmailRequest(List.empty, "id_5", Map.empty, force = false, None, None)
+      )
 
       running(app) {
         await(Future.sequence(emailRequests.map((emailRequest: EmailRequest) => emailQueue.enqueueJob(emailRequest))))
         emailRequests.map(_ => await(emailQueue.nextJob))
 
         val emailQueueCollection = emailQueue.collection
-        val countAllTrue: Long = await(emailQueueCollection.countDocuments(
-          filter = Filters.equal("processing", true)).toFuture().map(s => s))
+        val countAllTrue: Long   =
+          await(emailQueueCollection.countDocuments(filter = Filters.equal("processing", true)).toFuture().map(s => s))
 
         countAllTrue must be(emailRequests.size)
 
         await(emailQueue.resetProcessing)
 
-        val resetCount: Long = await(emailQueueCollection.countDocuments(
-          filter = Filters.equal("processing", false)).toFuture().map(s => s))
+        val resetCount: Long =
+          await(emailQueueCollection.countDocuments(filter = Filters.equal("processing", false)).toFuture().map(s => s))
 
         resetCount must be(3)
 
@@ -162,7 +166,7 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
   }
 
   trait Setup {
-    val mockAppConfig: AppConfig = mock(classOf[AppConfig])
+    val mockAppConfig: AppConfig             = mock(classOf[AppConfig])
     val mockDateTimeService: DateTimeService = mock(classOf[DateTimeService])
 
     val app: Application = new GuiceApplicationBuilder()
@@ -172,8 +176,7 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
     val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
     await(dropData)
 
-    def dropData: Future[Unit] = {
+    def dropData: Future[Unit] =
       emailQueue.collection.drop().toFuture().map(_ => ())
-    }
   }
 }

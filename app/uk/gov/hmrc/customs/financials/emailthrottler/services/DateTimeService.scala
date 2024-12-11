@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
-
 import java.time.LocalDateTime
 
 class DateTimeService {

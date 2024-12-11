@@ -32,8 +32,8 @@ class SchedulerSpec extends SpecBase {
       when(mockAppConfig.emailsPerInstancePerSecond).thenReturn(0.2)
 
       val mockEmailJobHandler = mock(classOf[EmailJobHandler])
-      val mockActorSystem = mock(classOf[ActorSystem])
-      val mockScheduler = mock(classOf[org.apache.pekko.actor.Scheduler])
+      val mockActorSystem     = mock(classOf[ActorSystem])
+      val mockScheduler       = mock(classOf[org.apache.pekko.actor.Scheduler])
 
       when(mockActorSystem.scheduler).thenReturn(mockScheduler)
 

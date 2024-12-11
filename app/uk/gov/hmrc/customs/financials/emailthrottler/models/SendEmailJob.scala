@@ -26,11 +26,13 @@ trait MongoJavatimeFormats {
   outer =>
 
   private final val localDateTimeReads: Reads[LocalDateTime] =
-    Reads.at[String](__ \ "$date" \ "$numberLong")
+    Reads
+      .at[String](__ \ "$date" \ "$numberLong")
       .map(dateTime => Instant.ofEpochMilli(dateTime.toLong).atZone(ZoneOffset.UTC).toLocalDateTime)
 
   private val localDateTimeWrites: Writes[LocalDateTime] =
-    Writes.at[String](__ \ "$date" \ "$numberLong")
+    Writes
+      .at[String](__ \ "$date" \ "$numberLong")
       .contramap(_.toInstant(ZoneOffset.UTC).toEpochMilli.toString)
 
   final val localDateTimeFormat: Format[LocalDateTime] =
@@ -46,6 +48,6 @@ trait MongoJavatimeFormats {
 object MongoJavatimeFormats extends MongoJavatimeFormats
 
 object SendEmailJob {
-  implicit val mongoDateTime: Format[LocalDateTime] = MongoJavatimeFormats.localDateTimeFormat
+  implicit val mongoDateTime: Format[LocalDateTime]      = MongoJavatimeFormats.localDateTimeFormat
   implicit val formatSendEmailJob: OFormat[SendEmailJob] = Json.format[SendEmailJob]
 }

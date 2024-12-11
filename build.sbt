@@ -45,7 +45,10 @@ lazy val microservice = Project(appName, file("."))
     targetJvm := "jvm-11",
     scalacOptions := Seq("-feature", "-deprecation"),
     Test / parallelExecution := false,
-    Test / fork := false
+    Test / fork := false,
+    scalafmtDetailedError := true,
+    scalafmtPrintDiff := true,
+    scalafmtFailOnErrors := true
   )
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(scalastyleSettings)
@@ -65,4 +68,4 @@ lazy val it = project
   .settings(libraryDependencies ++= Seq("uk.gov.hmrc" %% "bootstrap-test-play-30" % bootstrapVersion % Test))
 
 addCommandAlias("runAllChecks",
-  ";clean;compile;coverage;test;it/test;scalastyle;Test/scalastyle;coverageReport")
+  ";clean;compile;coverage;test;it/test;scalafmtCheckAll;scalastyle;Test/scalastyle;coverageReport")

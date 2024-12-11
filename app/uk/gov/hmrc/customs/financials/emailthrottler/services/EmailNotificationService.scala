@@ -29,8 +29,10 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class EmailNotificationService @Inject()(http: HttpClientV2, metricsReporter: MetricsReporterService)
-                                        (implicit appConfig: AppConfig, ec: ExecutionContext) {
+class EmailNotificationService @Inject() (http: HttpClientV2, metricsReporter: MetricsReporterService)(implicit
+  appConfig: AppConfig,
+  ec: ExecutionContext
+) {
 
   val log: LoggerLike = Logger(this.getClass)
 
@@ -38,22 +40,26 @@ class EmailNotificationService @Inject()(http: HttpClientV2, metricsReporter: Me
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
     metricsReporter.withResponseTimeLogging("email.post.send-email") {
-      http.post(url"${appConfig.sendEmailUrl}")
+      http
+        .post(url"${appConfig.sendEmailUrl}")
         .withBody[EmailRequest](request)
         .execute[HttpResponse]
         .flatMap {
-          case response if response.status == Status.ACCEPTED => Future.successful(log.info(
-            s"[SendEmail] Successful for ${request.to}"))
-          Future.successful(true)
+          case response if response.status == Status.ACCEPTED =>
+            Future.successful(log.info(s"[SendEmail] Successful for ${request.to}"))
+            Future.successful(true)
 
-          case response => Future.successful(log.error(
-            s"[SendEmail] Failed for ${
-              request.to} with status - ${response.status} error - ${response.body}"))
+          case response =>
+            Future.successful(
+              log.error(
+                s"[SendEmail] Failed for ${request.to} with status - ${response.status} error - ${response.body}"
+              )
+            )
             Future.successful(false)
 
-        }.recover {
-          case ex: Throwable => log.error(
-            s"[SendEmail] Received an exception with message - ${ex.getMessage}")
+        }
+        .recover { case ex: Throwable =>
+          log.error(s"[SendEmail] Received an exception with message - ${ex.getMessage}")
           false
         }
     }

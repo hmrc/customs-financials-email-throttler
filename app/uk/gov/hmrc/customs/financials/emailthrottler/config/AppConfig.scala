@@ -21,10 +21,10 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class AppConfig @Inject()(val config: Configuration, servicesConfig: ServicesConfig) {
-  lazy val appName: String = servicesConfig.getString("appName")
-  lazy val sendEmailUrl: String = servicesConfig.baseUrl("email") + "/hmrc/email"
+class AppConfig @Inject() (val config: Configuration, servicesConfig: ServicesConfig) {
+  lazy val appName: String                    = servicesConfig.getString("appName")
+  lazy val sendEmailUrl: String               = servicesConfig.baseUrl("email") + "/hmrc/email"
   lazy val emailsPerInstancePerSecond: Double = config.get[Double]("emailsPerInstancePerSecond")
-  lazy val emailMaxAgeMins: Int = config.get[Int]("emailMaxAgeMins")
-  lazy val housekeepingHours: Int = config.get[Int]("housekeepingHours")
+  lazy val emailMaxAgeMins: Int               = config.get[Int]("emailMaxAgeMins")
+  lazy val housekeepingHours: Int             = config.get[Int]("housekeepingHours")
 }
