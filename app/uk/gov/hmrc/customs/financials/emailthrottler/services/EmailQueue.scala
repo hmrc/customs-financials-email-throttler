@@ -34,36 +34,39 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 @Singleton
-class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
-                           dateTimeService: DateTimeService,
-                           appConfig: AppConfig,
-                           metricsReporter: MetricsReporterService)
-                          (implicit ec: ExecutionContext)
-  extends PlayMongoRepository[SendEmailJob](
-    collectionName = "email-queue",
-    mongoComponent = mongoComponent,
-    domainFormat = SendEmailJob.formatSendEmailJob,
-    indexes = Seq(
-      IndexModel(
-        ascending("lastUpdated"),
-        IndexOptions().name("email-queue-last-updated-index")
-          .background(false)
+class EmailQueue @Inject() (
+  mongoComponent: PlayMongoComponent,
+  dateTimeService: DateTimeService,
+  appConfig: AppConfig,
+  metricsReporter: MetricsReporterService
+)(implicit ec: ExecutionContext)
+    extends PlayMongoRepository[SendEmailJob](
+      collectionName = "email-queue",
+      mongoComponent = mongoComponent,
+      domainFormat = SendEmailJob.formatSendEmailJob,
+      indexes = Seq(
+        IndexModel(
+          ascending("lastUpdated"),
+          IndexOptions()
+            .name("email-queue-last-updated-index")
+            .background(false)
+        )
       )
-    )) {
+    ) {
 
   val logger: LoggerLike = Logger(this.getClass)
 
   def enqueueJob(emailRequest: EmailRequest): Future[Boolean] = {
-    val timeStamp = dateTimeService.getLocalDateTime
-    val id = UUID.randomUUID().toString
-    val record = SendEmailJob(id, emailRequest, processing = false, timeStamp)
+    val timeStamp               = dateTimeService.getLocalDateTime
+    val id                      = UUID.randomUUID().toString
+    val record                  = SendEmailJob(id, emailRequest, processing = false, timeStamp)
     val result: Future[Boolean] = collection.insertOne(record).toFuture().map(_.wasAcknowledged())
 
     result.onComplete {
       case Failure(error) =>
         metricsReporter.reportFailedEnqueueJob()
         logger.error(s"Could not enqueue send email job: ${error.getMessage}")
-      case Success(_) =>
+      case Success(_)     =>
         metricsReporter.reportSuccessfulEnqueueJob()
         logger.info(s"Successfully enqueued send email job:  $timeStamp : $emailRequest")
     }
@@ -71,31 +74,33 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
     result
   }
 
-  def nextJob: Future[Option[SendEmailJob]] = {
-    collection.findOneAndUpdate(
-      equal("processing", false),
-      Updates.set("processing", true)
-    ).toFutureOption().map {
-      case emailJob@Some(value) =>
-        metricsReporter.reportSuccessfulMarkJobForProcessing()
-        logger.info(s"Successfully marked latest send email job for processing: $value")
-        emailJob
-      case None =>
-        logger.debug(s"email queue is empty")
-        None
-    }.recover {
-      case m =>
+  def nextJob: Future[Option[SendEmailJob]] =
+    collection
+      .findOneAndUpdate(
+        equal("processing", false),
+        Updates.set("processing", true)
+      )
+      .toFutureOption()
+      .map {
+        case emailJob @ Some(value) =>
+          metricsReporter.reportSuccessfulMarkJobForProcessing()
+          logger.info(s"Successfully marked latest send email job for processing: $value")
+          emailJob
+        case None                   =>
+          logger.debug(s"email queue is empty")
+          None
+      }
+      .recover { case m =>
         metricsReporter.reportFailedMarkJobForProcessing()
         logger.error(s"Marking send email job for processing failed. Unexpected MongoDB error: $m")
         throw m
-    }
-  }
+      }
 
   def deleteJob(id: String): Future[Boolean] = {
     val result = collection.deleteOne(equal("_id", id)).toFuture().map(_.wasAcknowledged())
 
     result.onComplete {
-      case Success(_) =>
+      case Success(_)     =>
         metricsReporter.reportSuccessfullyRemoveCompletedJob()
         logger.info(s"Successfully deleted send email job: $id")
       case Failure(error) =>
@@ -107,15 +112,18 @@ class EmailQueue @Inject()(mongoComponent: PlayMongoComponent,
   }
 
   def resetProcessing: Future[Unit] = {
-    val maxAge = dateTimeService.getLocalDateTime.minusMinutes(appConfig.emailMaxAgeMins)
+    val maxAge  = dateTimeService.getLocalDateTime.minusMinutes(appConfig.emailMaxAgeMins)
     val updates = Updates.set("processing", false)
 
-    collection.updateMany(
-      filter = Filters.and(
-        Filters.equal("processing", true),
-        Filters.lt("lastUpdated", maxAge.toInstant(ZoneOffset.UTC))
-      ),
-      updates
-    ).toFuture().map(_ => ())
+    collection
+      .updateMany(
+        filter = Filters.and(
+          Filters.equal("processing", true),
+          Filters.lt("lastUpdated", maxAge.toInstant(ZoneOffset.UTC))
+        ),
+        updates
+      )
+      .toFuture()
+      .map(_ => ())
   }
 }

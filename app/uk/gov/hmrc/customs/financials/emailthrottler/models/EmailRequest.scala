@@ -24,13 +24,15 @@ case class EmailAddress(address: String) {
   override def toString: String = "*" * address.length
 }
 
-case class EmailRequest(to: List[EmailAddress],
-                        templateId: String,
-                        parameters: Map[String, String] = Map.empty,
-                        force: Boolean = false,
-                        enrolment: Option[String] = None,
-                        eventUrl: Option[String] = None,
-                        onSendUrl: Option[String] = None) {
+case class EmailRequest(
+  to: List[EmailAddress],
+  templateId: String,
+  parameters: Map[String, String] = Map.empty,
+  force: Boolean = false,
+  enrolment: Option[String] = None,
+  eventUrl: Option[String] = None,
+  onSendUrl: Option[String] = None
+) {
 
   def formattedEnrolment: EmailRequest = {
     val formattedEnrolment = enrolment.map(e => s"HMRC-CUS-ORG~EORINumber~$e")
@@ -40,11 +42,11 @@ case class EmailRequest(to: List[EmailAddress],
 }
 
 object EmailRequest {
-  implicit val emailAddressFormat: Format[EmailAddress] = JsonFormatUtils.stringFormat(EmailAddress.apply)(_.address)
+  implicit val emailAddressFormat: Format[EmailAddress]  = JsonFormatUtils.stringFormat(EmailAddress.apply)(_.address)
   implicit val emailRequestFormat: OFormat[EmailRequest] = Json.format[EmailRequest]
 
   implicit def jsonBodyWritable[T](implicit
-                                   writes: Writes[T],
-                                   jsValueBodyWritable: BodyWritable[JsValue]
-                                  ): BodyWritable[T] = jsValueBodyWritable.map(writes.writes)
+    writes: Writes[T],
+    jsValueBodyWritable: BodyWritable[JsValue]
+  ): BodyWritable[T] = jsValueBodyWritable.map(writes.writes)
 }

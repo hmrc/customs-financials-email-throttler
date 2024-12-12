@@ -37,12 +37,12 @@ class EmailJobHandlerSpec extends SpecBase {
 
   class MockedEmailJobHandlerScenario() {
 
-    val tdYear = 2019
-    val tdMonth = 10
+    val tdYear       = 2019
+    val tdMonth      = 10
     val tdDayOfMonth = 8
-    val tdHour = 15
-    val tdMinute = 1
-    val tdSecond = 0
+    val tdHour       = 15
+    val tdMinute     = 1
+    val tdSecond     = 0
     val tdNanoSecond = 0
 
     val sendEmailJob: SendEmailJob = SendEmailJob(
@@ -86,8 +86,8 @@ class EmailJobHandlerSpec extends SpecBase {
       }
 
       "integration" in {
-        val appConfig = mock(classOf[AppConfig])
-        val mockConfiguration = mock(classOf[Configuration])
+        val appConfig                = mock(classOf[AppConfig])
+        val mockConfiguration        = mock(classOf[Configuration])
         val mockApplicationLifeCycle = mock(classOf[ApplicationLifecycle])
 
         when(mockConfiguration.get(ArgumentMatchers.eq("mongodb.uri"))(any))
@@ -99,9 +99,9 @@ class EmailJobHandlerSpec extends SpecBase {
         val reactiveMongoComponent: PlayMongoComponent =
           new PlayMongoComponent(mockConfiguration, lifecycle = mockApplicationLifeCycle)
 
-        val metricsReporter = mock(classOf[MetricsReporterService])
+        val metricsReporter     = mock(classOf[MetricsReporterService])
         val mockDateTimeService = mock(classOf[DateTimeService])
-        val emailQueue = new EmailQueue(reactiveMongoComponent, mockDateTimeService, appConfig, metricsReporter)
+        val emailQueue          = new EmailQueue(reactiveMongoComponent, mockDateTimeService, appConfig, metricsReporter)
 
         when(mockDateTimeService.getLocalDateTime).thenCallRealMethod()
 
@@ -115,7 +115,7 @@ class EmailJobHandlerSpec extends SpecBase {
 
         val mockEmailNotificationService = mock(classOf[EmailNotificationService])
         when(mockEmailNotificationService.sendEmail(ArgumentMatchers.any())).thenReturn(Future.successful(true))
-        val service = new EmailJobHandler(emailQueue, mockEmailNotificationService)
+        val service                      = new EmailJobHandler(emailQueue, mockEmailNotificationService)
 
         await(service.processJob())
         await(service.processJob())

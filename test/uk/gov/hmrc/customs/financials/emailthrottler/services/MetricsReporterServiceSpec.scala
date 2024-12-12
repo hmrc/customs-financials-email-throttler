@@ -34,8 +34,7 @@ class MetricsReporterServiceSpec extends SpecBase {
       "reportSuccessfulEnqueueJob" in new Setup {
         metricsReporterService.reportSuccessfulEnqueueJob()
 
-        verify(mockRegistry).counter(ArgumentMatchers.eq(
-          "email-queue.enqueue-send-email-job-in-mongo-successful"))
+        verify(mockRegistry).counter(ArgumentMatchers.eq("email-queue.enqueue-send-email-job-in-mongo-successful"))
 
         verify(mockCounter).inc()
       }
@@ -43,8 +42,7 @@ class MetricsReporterServiceSpec extends SpecBase {
       "reportFailedEnqueueJob" in new Setup {
         metricsReporterService.reportFailedEnqueueJob()
 
-        verify(mockRegistry).counter(ArgumentMatchers.eq(
-          "email-queue.enqueue-send-email-job-in-mongo-failed"))
+        verify(mockRegistry).counter(ArgumentMatchers.eq("email-queue.enqueue-send-email-job-in-mongo-failed"))
 
         verify(mockCounter).inc()
       }
@@ -52,8 +50,9 @@ class MetricsReporterServiceSpec extends SpecBase {
       "reportSuccessfulMarkJobForProcessing" in new Setup {
         metricsReporterService.reportSuccessfulMarkJobForProcessing()
 
-        verify(mockRegistry).counter(ArgumentMatchers.eq(
-          "email-queue.mark-oldest-send-email-job-for-processing-in-mongo-successful"))
+        verify(mockRegistry).counter(
+          ArgumentMatchers.eq("email-queue.mark-oldest-send-email-job-for-processing-in-mongo-successful")
+        )
 
         verify(mockCounter).inc()
       }
@@ -61,8 +60,9 @@ class MetricsReporterServiceSpec extends SpecBase {
       "reportFailedMarkJobForProcessing" in new Setup {
         metricsReporterService.reportFailedMarkJobForProcessing()
 
-        verify(mockRegistry).counter(ArgumentMatchers.eq(
-          "email-queue.mark-oldest-send-email-job-for-processing-in-mongo-failed"))
+        verify(mockRegistry).counter(
+          ArgumentMatchers.eq("email-queue.mark-oldest-send-email-job-for-processing-in-mongo-failed")
+        )
 
         verify(mockCounter).inc()
       }
@@ -70,8 +70,9 @@ class MetricsReporterServiceSpec extends SpecBase {
       "reportSuccessfulRemoveCompletedJob" in new Setup {
         metricsReporterService.reportSuccessfullyRemoveCompletedJob()
 
-        verify(mockRegistry).counter(ArgumentMatchers.eq(
-          "email-queue.delete-completed-send-email-job-from-mongo-successful"))
+        verify(mockRegistry).counter(
+          ArgumentMatchers.eq("email-queue.delete-completed-send-email-job-from-mongo-successful")
+        )
 
         verify(mockCounter).inc()
       }
@@ -79,8 +80,9 @@ class MetricsReporterServiceSpec extends SpecBase {
       "reportFailedRemoveCompletedJob" in new Setup {
         metricsReporterService.reportFailedToRemoveCompletedJob()
 
-        verify(mockRegistry).counter(ArgumentMatchers.eq(
-          "email-queue.delete-completed-send-email-job-from-mongo-failed"))
+        verify(mockRegistry).counter(
+          ArgumentMatchers.eq("email-queue.delete-completed-send-email-job-from-mongo-failed")
+        )
 
         verify(mockCounter).inc()
       }
@@ -141,8 +143,7 @@ class MetricsReporterServiceSpec extends SpecBase {
         assertThrows[UpstreamErrorResponse] {
           await {
             metricsReporterService.withResponseTimeLogging("bar") {
-              Future.failed(UpstreamErrorResponse(
-                "failure", Status.SERVICE_UNAVAILABLE, Status.NOT_IMPLEMENTED))
+              Future.failed(UpstreamErrorResponse("failure", Status.SERVICE_UNAVAILABLE, Status.NOT_IMPLEMENTED))
             }
           }
         }
@@ -155,8 +156,7 @@ class MetricsReporterServiceSpec extends SpecBase {
         assertThrows[UpstreamErrorResponse] {
           await {
             metricsReporterService.withResponseTimeLogging("bar") {
-              Future.failed(UpstreamErrorResponse(
-                "failure", Status.FORBIDDEN, Status.NOT_IMPLEMENTED))
+              Future.failed(UpstreamErrorResponse("failure", Status.FORBIDDEN, Status.NOT_IMPLEMENTED))
             }
           }
         }
@@ -169,29 +169,29 @@ class MetricsReporterServiceSpec extends SpecBase {
 
   trait Setup {
 
-    val tdYear = 2018
-    val tdMonth = 11
-    val tdDayOfMonth = 9
-    val tdHour = 17
-    val tdMinute = 15
+    val tdYear        = 2018
+    val tdMonth       = 11
+    val tdDayOfMonth  = 9
+    val tdHour        = 17
+    val tdMinute      = 15
     val tdSecondVal30 = 30
     val tdSecondVal35 = 35
-    val tdNanoSecond = 1
+    val tdNanoSecond  = 1
 
     val mockDateTimeService: DateTimeService = mock(classOf[DateTimeService])
-    val startTimestamp: LocalDateTime =
+    val startTimestamp: LocalDateTime        =
       LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdMinute, tdSecondVal30, tdNanoSecond)
 
     val endTimestamp: LocalDateTime =
       LocalDateTime.of(tdYear, tdMonth, tdDayOfMonth, tdHour, tdMinute, tdSecondVal35, tdNanoSecond)
-    val elapsedTimeInMillis: Long = 5000L
+    val elapsedTimeInMillis: Long   = 5000L
 
     when(mockDateTimeService.getLocalDateTime)
       .thenReturn(startTimestamp)
       .thenReturn(endTimestamp)
 
     val mockHistogram: Histogram = mock(classOf[Histogram])
-    val mockCounter: Counter = mock(classOf[Counter])
+    val mockCounter: Counter     = mock(classOf[Counter])
     when(mockCounter.inc()).thenCallRealMethod()
 
     val mockRegistry: MetricRegistry = mock(classOf[MetricRegistry])

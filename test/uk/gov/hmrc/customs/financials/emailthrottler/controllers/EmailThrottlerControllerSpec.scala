@@ -35,8 +35,8 @@ class EmailThrottlerControllerSpec extends SpecBase {
 
     "handle enqueue request" in new Setup {
 
-      val fakeRequest: FakeRequest[EmailRequest] = FakeRequest(
-        "POST", "/", FakeHeaders(), requestBody01.as[EmailRequest])
+      val fakeRequest: FakeRequest[EmailRequest] =
+        FakeRequest("POST", "/", FakeHeaders(), requestBody01.as[EmailRequest])
 
       val result: Future[Result] = controller.enqueueEmail()(fakeRequest)
 
@@ -45,8 +45,8 @@ class EmailThrottlerControllerSpec extends SpecBase {
 
     "accept and store EmailRequest payload with eventUrl and onSendUrl" in new Setup {
 
-      val fakeRequest: FakeRequest[EmailRequest] = FakeRequest(
-        "POST", "/", FakeHeaders(), requestBody01.as[EmailRequest])
+      val fakeRequest: FakeRequest[EmailRequest] =
+        FakeRequest("POST", "/", FakeHeaders(), requestBody01.as[EmailRequest])
 
       val expectedResult: EmailRequest = EmailRequest(
         List(
@@ -66,8 +66,8 @@ class EmailThrottlerControllerSpec extends SpecBase {
 
     "accept and store EmailRequest payload without eventUrl and onSendUrl" in new Setup {
 
-      val fakeRequest: FakeRequest[EmailRequest] = FakeRequest(
-        "POST", "/", FakeHeaders(), requestBody02.as[EmailRequest])
+      val fakeRequest: FakeRequest[EmailRequest] =
+        FakeRequest("POST", "/", FakeHeaders(), requestBody02.as[EmailRequest])
 
       val expectedResult: EmailRequest = EmailRequest(
         List(
@@ -87,8 +87,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
 
   trait Setup {
 
-    val requestBody01: JsValue = Json.parse(
-      """{
+    val requestBody01: JsValue = Json.parse("""{
         |  "to": [
         |    "email1@example.co.uk",
         |    "email2@example.co.uk"
@@ -104,8 +103,7 @@ class EmailThrottlerControllerSpec extends SpecBase {
         |  "onSendUrl": "on.send.url.co.uk"
         |}""".stripMargin)
 
-    val requestBody02: JsValue = Json.parse(
-      """{
+    val requestBody02: JsValue = Json.parse("""{
         |  "to": [
         |    "email1@example.co.uk",
         |    "email2@example.co.uk"

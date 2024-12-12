@@ -41,14 +41,14 @@ class EmailRequestSpec extends SpecBase {
       EmailAddress("email2@example.co.uk")
     )
 
-    val id: String = "template_for_duty_deferment_email"
+    val id: String                  = "template_for_duty_deferment_email"
     val params: Map[String, String] = Map("param1" -> "value1", "param2" -> "value2")
-    val enrolment: String = "testEori"
-    val eventUrl: String = "event.url.co.uk"
-    val onSendUrl: String = "on.send.url.co.uk"
+    val enrolment: String           = "testEori"
+    val eventUrl: String            = "event.url.co.uk"
+    val onSendUrl: String           = "on.send.url.co.uk"
 
-    val emailReq: EmailRequest = EmailRequest(emails, id, params, false,
-      Option(enrolment), Option(eventUrl), Option(onSendUrl))
+    val emailReq: EmailRequest =
+      EmailRequest(emails, id, params, false, Option(enrolment), Option(eventUrl), Option(onSendUrl))
 
     val requestBody: String =
       s"""{

@@ -27,29 +27,32 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 @Singleton
-class MetricsReporterService @Inject()(val metrics: MetricRegistry, dateTimeService: DateTimeService) {
+class MetricsReporterService @Inject() (val metrics: MetricRegistry, dateTimeService: DateTimeService) {
 
-  def withResponseTimeLogging[T](resourceName: String)(future: Future[T])
-                                (implicit ec: ExecutionContext): Future[T] = {
+  def withResponseTimeLogging[T](resourceName: String)(future: Future[T])(implicit ec: ExecutionContext): Future[T] = {
     val startTime = dateTimeService.getLocalDateTime
     future.andThen { case response =>
       val httpResponseCode = response match {
-        case Success(_) => Status.OK
-        case Failure(exception: NotFoundException) => exception.responseCode
-        case Failure(exception: BadRequestException) => exception.responseCode
+        case Success(_)                                => Status.OK
+        case Failure(exception: NotFoundException)     => exception.responseCode
+        case Failure(exception: BadRequestException)   => exception.responseCode
         case Failure(exception: UpstreamErrorResponse) => exception.statusCode
-        case Failure(_) => Status.INTERNAL_SERVER_ERROR
+        case Failure(_)                                => Status.INTERNAL_SERVER_ERROR
       }
 
       updateResponseTimeHistogram(resourceName, httpResponseCode, startTime, dateTimeService.getLocalDateTime)
     }
   }
 
-  private def updateResponseTimeHistogram(resourceName: String, httpResponseCode: Int,
-                                          startTimestamp: LocalDateTime, endTimestamp: LocalDateTime): Unit = {
+  private def updateResponseTimeHistogram(
+    resourceName: String,
+    httpResponseCode: Int,
+    startTimestamp: LocalDateTime,
+    endTimestamp: LocalDateTime
+  ): Unit = {
     val RESPONSE_TIMES_METRIC = "responseTimes"
-    val histogramName = s"$RESPONSE_TIMES_METRIC.$resourceName.$httpResponseCode"
-    val elapsedTimeInMillis =
+    val histogramName         = s"$RESPONSE_TIMES_METRIC.$resourceName.$httpResponseCode"
+    val elapsedTimeInMillis   =
       endTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli - startTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli
 
     metrics.histogram(histogramName).update(elapsedTimeInMillis)

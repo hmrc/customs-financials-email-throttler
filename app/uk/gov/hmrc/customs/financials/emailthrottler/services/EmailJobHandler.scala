@@ -20,18 +20,18 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class EmailJobHandler @Inject()(emailQueue: EmailQueue,
-                                emailNotificationService: EmailNotificationService)(implicit ec: ExecutionContext) {
+class EmailJobHandler @Inject() (emailQueue: EmailQueue, emailNotificationService: EmailNotificationService)(implicit
+  ec: ExecutionContext
+) {
 
-  def processJob(): Future[Unit] = {
+  def processJob(): Future[Unit] =
     for {
-      job <- emailQueue.nextJob if job.isDefined
+      job         <- emailQueue.nextJob if job.isDefined
       emailRequest = job.get.emailRequest
-      _ <- emailNotificationService.sendEmail(emailRequest)
-      id = job.get._id
-      _ <- emailQueue.deleteJob(id)
+      _           <- emailNotificationService.sendEmail(emailRequest)
+      id           = job.get._id
+      _           <- emailQueue.deleteJob(id)
     } yield ()
-  }
 
   def houseKeeping(): Unit = emailQueue.resetProcessing
 }
