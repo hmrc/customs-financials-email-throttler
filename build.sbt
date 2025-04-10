@@ -4,22 +4,22 @@ import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 
 val appName = "customs-financials-email-throttler"
 
-val scalaStyleConfigFile = "scalastyle-config.xml"
+val scalaStyleConfigFile     = "scalastyle-config.xml"
 val testScalaStyleConfigFile = "test-scalastyle-config.xml"
-val testDirectory = "test"
+val testDirectory            = "test"
 
-val scala3_3_3 = "3.3.3"
-val bootstrapVersion = "9.1.0"
+val scala3_3_5      = "3.3.5"
 val silencerVersion = "1.7.14"
 
 ThisBuild / majorVersion := 0
-ThisBuild / scalaVersion := scala3_3_3
+ThisBuild / scalaVersion := scala3_3_5
 
 organization := "uk.gov.hmrc"
 
 lazy val scalastyleSettings = Seq(
   scalastyleConfig := baseDirectory.value / "scalastyle-config.xml",
-  (Test / scalastyleConfig) := baseDirectory.value / testDirectory / "test-scalastyle-config.xml")
+  (Test / scalastyleConfig) := baseDirectory.value / testDirectory / "test-scalastyle-config.xml"
+)
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
@@ -29,16 +29,19 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     scalacOptions := scalacOptions.value.diff(Seq("-Wunused:all")),
+    scalacOptions += "-Wconf:msg=Flag.*repeatedly:s",
     Test / scalacOptions ++= Seq(
       "-Wunused:imports",
       "-Wunused:params",
       "-Wunused:implicits",
       "-Wunused:explicits",
-      "-Wunused:privates"),
+      "-Wunused:privates"
+    ),
     libraryDependencies ++= Seq(
       compilerPlugin(
         "com.github.ghik" % "silencer-plugin" % silencerVersion
-          cross CrossVersion.for3Use2_13With("", ".12")),
+          cross CrossVersion.for3Use2_13With("", ".12")
+      ),
       "com.github.ghik" % "silencer-lib" % silencerVersion % Provided
         cross CrossVersion.for3Use2_13With("", ".12")
     ),
@@ -64,7 +67,11 @@ lazy val scoverageSettings = Seq(
 lazy val it = project
   .enablePlugins(PlayScala)
   .dependsOn(microservice % "test->test")
-  .settings(libraryDependencies ++= Seq("uk.gov.hmrc" %% "bootstrap-test-play-30" % bootstrapVersion % Test))
+  .settings(
+    libraryDependencies ++= Seq("uk.gov.hmrc" %% "bootstrap-test-play-30" % AppDependencies.bootstrapVersion % Test)
+  )
 
-addCommandAlias("runAllChecks",
-  ";clean;compile;coverage;test;it/test;scalafmtCheckAll;scalastyle;Test/scalastyle;coverageReport")
+addCommandAlias(
+  "runAllChecks",
+  ";clean;compile;coverage;test;it/test;scalafmtCheckAll;scalastyle;Test/scalastyle;coverageReport"
+)
