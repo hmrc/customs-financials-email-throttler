@@ -17,7 +17,7 @@
 package uk.gov.hmrc.customs.financials.emailthrottler.services
 
 import com.mongodb.client.model.Indexes.ascending
-import com.mongodb.client.model.Updates
+import com.mongodb.client.model.{FindOneAndUpdateOptions, Updates}
 import org.mongodb.scala.model.Filters.equal
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions}
 import play.api.{Logger, LoggerLike}
@@ -46,12 +46,12 @@ class EmailQueue @Inject() (
       domainFormat = SendEmailJob.formatSendEmailJob,
       indexes = Seq(
         IndexModel(
-          ascending("lastUpdated"),
+          ascending("processing", "lastUpdated"),
           IndexOptions()
-            .name("email-queue-last-updated-index")
-            .background(false)
+            .name("email-queue-last-updated-processing-index")
         )
-      )
+      ),
+      replaceIndexes = true
     ) {
 
   val logger: LoggerLike = Logger(this.getClass)
@@ -78,7 +78,8 @@ class EmailQueue @Inject() (
     collection
       .findOneAndUpdate(
         equal("processing", false),
-        Updates.set("processing", true)
+        Updates.set("processing", true),
+        FindOneAndUpdateOptions().sort(ascending("lastUpdated"))
       )
       .toFutureOption()
       .map {
