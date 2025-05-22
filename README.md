@@ -15,8 +15,6 @@ This application lives in the "public" zone.
 
 `sbt runAllChecks` - Will run all checks required for a successful build
 
-Default service port on local - 9872
-
 ### Required dependencies
 
 There are a number of dependencies required to run the service.
@@ -29,8 +27,7 @@ The easiest way to get started with these is via the service manager CLI - you c
 | `sm2 --start CUSTOMS_EMAIL_FRONTEND_ALL `       | Runs all email dependencies                                      |
 | `sm2 -s`                                        | Shows running services                                           |
 | `sm2 --stop CUSTOMS_FINANCIALS_EMAIL_THROTTLER` | Stop the micro service                                           |
-| `sbt run` or `sbt "run 9872"`                   | (from root dir) to compile the current service with your changes |
-
+| `sbt run` `                                     | (from root dir) to compile the current service with your changes |
 
 ### Runtime Dependencies
 (These are subject to change and may not include every dependency)
@@ -44,17 +41,6 @@ The easiest way to get started with these is via the service manager CLI - you c
 * `USER_DETAILS`
 * `EMAIL`
 * `CONTACT_FRONTEND`
-
-### Login enrolments
-
-The service can be accessed by using below enrolments and with below sample EORI numbers, via http://localhost:9949/auth-login-stub/gg-sign-in (on local) or https://<host:port>/auth-login-stub/gg-sign-in on DEV/QA/STAGING
-
-Redirect URL - `/customs/payment-records`
-
-| Enrolment Key  | Identifier Name | Identifier Value |
-|----------------|-----------------|------------------|
-| `HMRC-CUS-ORG` | `EORINumber`    | `GB744638982000` |
-| `HMRC-CUS-ORG` | `EORINumber`    | `GB744638982001` |
 
 ## Testing
 
@@ -80,22 +66,7 @@ You can find a list of microservice specific routes here - `/conf/app.routes`
 Application entrypoint:  `/customs/payment-records`
 
 ## Feature Switches
-
-> ### Caution!
-> There's a risk of WIP features being exposed in production!
-> **Don't** enable features in `application.conf`, as this will apply globally by default
-### Enable features
-| Command                                       | Description                                        |
-|-----------------------------------------------|----------------------------------------------------|
-| `sbt "run -Dfeatures.some-feature-name=true"` | enables a feature locally without risking exposure |
-
-### Available feature flags
-(There are currently no feature flags for this service)
-
-| Flag | Description |
-|------|-------------|
-
-Different features can be enabled / disabled per-environment via the `app-config-<env>` project by setting `features.some-feature: true`
+Not applicable
 
 ## Helpful commands
 
