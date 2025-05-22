@@ -63,7 +63,38 @@ The minimum requirement for test coverage is 90%. Builds will fail when the proj
 
 You can find a list of microservice specific routes here - `/conf/app.routes`
 
-Application entrypoint:  `/customs/payment-records`
+POST /enqueue-email
+
+Request Body
+```json 
+{
+    "to": [
+        "email1@example.co.uk",
+        "email2@example.co.uk"
+    ],
+    "templateId": "$id",
+    "parameters": {
+    "param1": "value1",
+    "param2": "value2"
+    },
+    "force": false,
+    "enrolment": "testEori",
+    "eventUrl": "event.url.co.uk",
+    "onSendUrl": "on.send.url.co.uk"
+}
+```
+
+Response Body
+```json
+{
+    "Status": "Ok",
+    "message": "Email successfully queued"
+}
+```
+
+Response code specification:
+202 If the request is processed successful
+400 This status code will be returned in case of incorrect data, incorrect data format, missing parameters etc are provided in the request
 
 ## Feature Switches
 Not applicable
