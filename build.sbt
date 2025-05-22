@@ -1,5 +1,4 @@
 import scoverage.ScoverageKeys
-import uk.gov.hmrc.DefaultBuildSettings.scalaSettings
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 
 val appName = "customs-financials-email-throttler"
@@ -24,7 +23,6 @@ lazy val scalastyleSettings = Seq(
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(sbt.plugins.JUnitXmlReportPlugin)
-  .settings(scalaSettings *)
   .settings(scoverageSettings *)
   .settings(
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
@@ -52,7 +50,6 @@ lazy val microservice = Project(appName, file("."))
     scalafmtPrintDiff := true,
     scalafmtFailOnErrors := true
   )
-  .settings(resolvers += Resolver.jcenterRepo)
   .settings(scalastyleSettings)
 
 lazy val scoverageSettings = Seq(
