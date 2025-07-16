@@ -28,7 +28,10 @@ import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailAddress, EmailRequest, SendEmailJob}
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import org.mongodb.scala.SingleObservableFuture
-import uk.gov.hmrc.customs.financials.emailthrottler.utils.TestData.{DAY_15, DAY_7, HOUR_1, HOUR_15, HOUR_5, MINUTES_0, MINUTES_1, MINUTES_28, MINUTES_30, MINUTES_31, MINUTES_59, MONTH_10, MONTH_3, MONTH_4, NANO_SECONDS_0, SECONDS_0, SECONDS_10, YEAR_2021}
+import uk.gov.hmrc.customs.financials.emailthrottler.utils.TestData.{
+  DAY_15, DAY_7, HOUR_1, HOUR_15, HOUR_5, MINUTES_0, MINUTES_1, MINUTES_28, MINUTES_30, MINUTES_31, MINUTES_59,
+  MONTH_10, MONTH_3, MONTH_4, NANO_SECONDS_0, SECONDS_0, SECONDS_10, YEAR_2021
+}
 
 import java.time.LocalDateTime
 import java.util.UUID

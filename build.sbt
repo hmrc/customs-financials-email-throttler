@@ -37,11 +37,9 @@ lazy val microservice = Project(appName, file("."))
     ),
     libraryDependencies ++= Seq(
       compilerPlugin(
-        "com.github.ghik" % "silencer-plugin" % silencerVersion
-          cross CrossVersion.for3Use2_13With("", ".12")
+        "com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.for3Use2_13With("", ".12")
       ),
-      "com.github.ghik" % "silencer-lib" % silencerVersion % Provided
-        cross CrossVersion.for3Use2_13With("", ".12")
+      "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.for3Use2_13With("", ".12")
     ),
     scalacOptions := Seq("-feature", "-deprecation"),
     Test / parallelExecution := false,
