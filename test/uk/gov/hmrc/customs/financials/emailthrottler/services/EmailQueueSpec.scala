@@ -19,7 +19,7 @@ package uk.gov.hmrc.customs.financials.emailthrottler.services
 import org.mockito.Mockito.{mock, spy, when}
 import org.mongodb.scala.model.Filters
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.matchers.should.Matchers._
+import org.scalatest.matchers.should.Matchers.*
 import play.api
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -28,10 +28,9 @@ import uk.gov.hmrc.customs.financials.emailthrottler.config.AppConfig
 import uk.gov.hmrc.customs.financials.emailthrottler.models.{EmailAddress, EmailRequest, SendEmailJob}
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import org.mongodb.scala.SingleObservableFuture
-
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.TestData.{
-  DAY_7, HOUR_1, HOUR_15, HOUR_5, MINUTES_0, MINUTES_1, MINUTES_28, MINUTES_30, MINUTES_31, MINUTES_59, MONTH_10,
-  MONTH_4, NANO_SECONDS_0, SECONDS_0, YEAR_2021
+  DAY_15, DAY_7, HOUR_1, HOUR_15, HOUR_5, MINUTES_0, MINUTES_1, MINUTES_28, MINUTES_30, MINUTES_31, MINUTES_59,
+  MONTH_10, MONTH_3, MONTH_4, NANO_SECONDS_0, SECONDS_0, SECONDS_10, YEAR_2021
 }
 
 import java.time.LocalDateTime
@@ -161,6 +160,51 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
         resetCount must be(3)
 
         await(dropData)
+      }
+    }
+
+    "Next job" should {
+      "return the job with the oldest lastUpdated timestamp first" in new Setup {
+        running(app) {
+          val oldestJob = SendEmailJob(
+            _id = "job-1",
+            EmailRequest(List.empty, "test1", Map.empty, force = false, None, None),
+            processing = false,
+            LocalDateTime.of(YEAR_2021, MONTH_3, DAY_7, HOUR_15, MINUTES_28, SECONDS_10, NANO_SECONDS_0)
+          )
+
+          running(app) {
+            val middleJob = SendEmailJob(
+              _id = "job-2",
+              EmailRequest(List.empty, "test2", Map.empty, force = false, None, None),
+              processing = false,
+              LocalDateTime.of(YEAR_2021, MONTH_4, DAY_15, HOUR_15, MINUTES_28, SECONDS_10, NANO_SECONDS_0)
+            )
+
+            running(app) {
+              val newestJob = SendEmailJob(
+                _id = "job-3",
+                EmailRequest(List.empty, "test3", Map.empty, force = false, None, None),
+                processing = false,
+                LocalDateTime.of(YEAR_2021, MONTH_10, DAY_7, HOUR_15, MINUTES_28, SECONDS_10, NANO_SECONDS_0)
+              )
+
+              await(emailQueue.collection.insertMany(Seq(oldestJob, middleJob, newestJob)).toFuture())
+
+              val result1 = await(emailQueue.nextJob)
+              val result2 = await(emailQueue.nextJob)
+              val result3 = await(emailQueue.nextJob)
+              val result4 = await(emailQueue.nextJob)
+
+              result1.map(_._id) shouldEqual Some("job-1")
+              result2.map(_._id) shouldEqual Some("job-2")
+              result3.map(_._id) shouldEqual Some("job-3")
+              result4 mustBe None
+
+              await(dropData)
+            }
+          }
+        }
       }
     }
   }
