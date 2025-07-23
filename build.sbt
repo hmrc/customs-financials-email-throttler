@@ -54,8 +54,7 @@ lazy val scoverageSettings = Seq(
   ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*BuildInfo.*;.*javascript.*;.*Routes.*;" +
     ".*GuiceInjector;.*testonly.*;.*EmailQueue;",
   ScoverageKeys.coverageMinimumStmtTotal := 90,
-  ScoverageKeys.coverageMinimumBranchTotal := 90,
-  ScoverageKeys.coverageFailOnMinimum := false,
+  ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true
 )
 

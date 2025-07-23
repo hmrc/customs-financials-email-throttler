@@ -29,7 +29,6 @@ class JsonFormatUtilsSpec extends SpecBase {
     "write the object correctly" in new Setup {
       Json.toJson(testObj) mustBe JsString(testValue)
     }
-
   }
 
   trait Setup {

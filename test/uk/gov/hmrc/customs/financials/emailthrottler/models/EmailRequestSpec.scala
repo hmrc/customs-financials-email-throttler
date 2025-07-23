@@ -28,6 +28,14 @@ class EmailRequestSpec extends SpecBase {
     }
   }
 
+  "throw exception for invalid Json" in {
+    val invalidJson = "{ \"trmpId\": \"test_id\", \"toDate1\": \"test_event\" }"
+
+    intercept[JsResultException] {
+      Json.parse(invalidJson).as[EmailRequest]
+    }
+  }
+
   "Writes" should {
     "generate correct output" in new Setup {
       Json.toJson(emailReq) mustBe Json.parse(requestBody)
