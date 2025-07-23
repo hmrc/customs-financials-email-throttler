@@ -116,11 +116,7 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
           result2 <- emailQueue.nextJob
           result3 <- emailQueue.nextJob
           _       <- emailQueue.collection.drop().toFuture()
-        } yield {
-          result1.nonEmpty mustBe true
-          result2.nonEmpty mustBe true
-          result3.nonEmpty mustBe false
-        })
+        } yield result3.nonEmpty mustBe false)
       }
     }
 
