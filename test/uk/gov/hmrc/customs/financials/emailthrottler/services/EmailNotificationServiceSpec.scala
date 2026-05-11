@@ -89,11 +89,13 @@ class EmailNotificationServiceSpec extends SpecBase {
 
     implicit val mockHttpClient: HttpClientV2       = mock(classOf[HttpClientV2])
     implicit val mockRequestBuilder: RequestBuilder = mock(classOf[RequestBuilder])
+    val mockScheduler: Scheduler                    = mock(classOf[Scheduler])
 
     val app: Application = new GuiceApplicationBuilder()
       .overrides(
         api.inject.bind[HttpClientV2].toInstance(mockHttpClient),
-        api.inject.bind[RequestBuilder].toInstance(mockRequestBuilder)
+        api.inject.bind[RequestBuilder].toInstance(mockRequestBuilder),
+        api.inject.bind[Scheduler].toInstance(mockScheduler)
       )
       .build()
 

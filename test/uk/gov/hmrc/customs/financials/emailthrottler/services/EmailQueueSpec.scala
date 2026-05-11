@@ -86,37 +86,33 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
       }
     }
 
-    "send all email jobs with processing set to false" in {
-      val mockScheduler = mock(classOf[Scheduler])
-
-      val app: Application = new GuiceApplicationBuilder()
-        .overrides(api.inject.bind[Scheduler].toInstance(mockScheduler))
-        .build()
-
-      val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
-
-      val oldestJob = SendEmailJob(
-        "id-1",
-        EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
-        processing = false,
-        LocalDateTime.of(YEAR_2021, MONTH_4, MONTH_10, HOUR_1, MINUTES_0, SECONDS_0)
-      )
-
-      val latestJob = SendEmailJob(
-        "id-2",
-        EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
-        processing = false,
-        LocalDateTime.of(YEAR_2021, MONTH_4, MONTH_10, HOUR_5, MINUTES_0, SECONDS_0)
-      )
-
+    "send all email jobs with processing set to false" in new Setup {
       running(app) {
-        await(for {
-          _       <- emailQueue.collection.insertMany(Seq(latestJob, oldestJob)).toFuture()
-          result1 <- emailQueue.nextJob
-          result2 <- emailQueue.nextJob
-          result3 <- emailQueue.nextJob
-          _       <- emailQueue.collection.drop().toFuture()
-        } yield result3.nonEmpty mustBe false)
+        val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
+
+        val oldestJob = SendEmailJob(
+          "id-1",
+          EmailRequest(List.empty, "id_1", Map.empty, force = false, None, None),
+          processing = false,
+          LocalDateTime.of(YEAR_2021, MONTH_4, MONTH_10, HOUR_1, MINUTES_0, SECONDS_0)
+        )
+
+        val latestJob = SendEmailJob(
+          "id-2",
+          EmailRequest(List.empty, "id_2", Map.empty, force = false, None, None),
+          processing = false,
+          LocalDateTime.of(YEAR_2021, MONTH_4, MONTH_10, HOUR_5, MINUTES_0, SECONDS_0)
+        )
+
+        running(app) {
+          await(for {
+            _       <- emailQueue.collection.insertMany(Seq(latestJob, oldestJob)).toFuture()
+            result1 <- emailQueue.nextJob
+            result2 <- emailQueue.nextJob
+            result3 <- emailQueue.nextJob
+            _       <- emailQueue.collection.drop().toFuture()
+          } yield result3.nonEmpty mustBe false)
+        }
       }
     }
 
@@ -144,14 +140,14 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
 
         val emailQueueCollection = emailQueue.collection
         val countAllTrue: Long   =
-          await(emailQueueCollection.countDocuments(filter = Filters.equal("processing", true)).toFuture().map(s => s))
+          await(emailQueueCollection.countDocuments(filter = Filters.equal("processing", true)).toFuture())
 
         countAllTrue must be > 1L
 
         await(emailQueue.resetProcessing)
 
         val resetCount: Long =
-          await(emailQueueCollection.countDocuments(filter = Filters.equal("processing", false)).toFuture().map(s => s))
+          await(emailQueueCollection.countDocuments(filter = Filters.equal("processing", false)).toFuture())
 
         resetCount must be > 1L
 
@@ -208,9 +204,13 @@ class EmailQueueSpec extends SpecBase with BeforeAndAfterEach {
   trait Setup {
     val mockAppConfig: AppConfig             = mock(classOf[AppConfig])
     val mockDateTimeService: DateTimeService = mock(classOf[DateTimeService])
+    val mockScheduler: Scheduler             = mock(classOf[Scheduler])
 
     val app: Application = new GuiceApplicationBuilder()
-      .overrides(api.inject.bind[DateTimeService].toInstance(mockDateTimeService))
+      .overrides(
+        api.inject.bind[DateTimeService].toInstance(mockDateTimeService),
+        api.inject.bind[Scheduler].toInstance(mockScheduler)
+      )
       .build()
 
     val emailQueue: EmailQueue = app.injector.instanceOf[EmailQueue]
