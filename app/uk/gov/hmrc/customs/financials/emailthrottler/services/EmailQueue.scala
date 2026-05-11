@@ -91,10 +91,9 @@ class EmailQueue @Inject() (
           logger.debug(s"email queue is empty")
           None
       }
-      .recover { case m =>
+      .andThen { case Failure(m) =>
         metricsReporter.reportFailedMarkJobForProcessing()
         logger.error(s"Marking send email job for processing failed. Unexpected MongoDB error: $m")
-        throw m
       }
 
   def deleteJob(id: String): Future[Boolean] = {

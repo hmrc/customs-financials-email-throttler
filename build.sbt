@@ -7,11 +7,11 @@ val scalaStyleConfigFile     = "scalastyle-config.xml"
 val testScalaStyleConfigFile = "test-scalastyle-config.xml"
 val testDirectory            = "test"
 
-val scala3_3_5      = "3.3.5"
-val silencerVersion = "1.7.14"
+val scala3_3_7      = "3.3.7"
+val silencerVersion = "1.7.19"
 
 ThisBuild / majorVersion := 0
-ThisBuild / scalaVersion := scala3_3_5
+ThisBuild / scalaVersion := scala3_3_7
 
 organization := "uk.gov.hmrc"
 

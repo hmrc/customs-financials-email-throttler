@@ -16,7 +16,9 @@
 
 package uk.gov.hmrc.customs.financials.emailthrottler
 
+import org.mockito.Mockito.mock
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
+import uk.gov.hmrc.customs.financials.emailthrottler.services.Scheduler
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Application, inject}
 import config.AppConfig
@@ -47,9 +49,12 @@ class AppConfigSpec extends SpecBase {
   }
 
   trait Setup {
+    val mockScheduler: Scheduler = mock(classOf[Scheduler])
+
     val app: Application = new GuiceApplicationBuilder()
       .configure("auditing.enabled" -> false)
       .configure("metrics.enabled" -> false)
+      .overrides(inject.bind[Scheduler].toInstance(mockScheduler))
       .build()
 
     val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
