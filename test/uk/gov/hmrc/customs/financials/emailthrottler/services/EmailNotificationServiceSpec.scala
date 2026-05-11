@@ -22,7 +22,7 @@ import play.api
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.*
-import play.api.{Application, inject}
+import play.api.Application
 import uk.gov.hmrc.customs.financials.emailthrottler.models.*
 import uk.gov.hmrc.customs.financials.emailthrottler.utils.SpecBase
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
